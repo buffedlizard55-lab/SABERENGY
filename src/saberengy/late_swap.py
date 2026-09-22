@@ -78,10 +78,14 @@ class LateSwapManager:
         salary_used = sum(projections.get(pid, {}).get("salary", 5000) for pid in new_lineup)
         remaining_cap = salary_cap - salary_used
 
-        # Find replacement: highest projection under remaining_cap that is not out
+        # Find replacement: highest projection under remaining_cap.
+        # CRITICAL: never re-select the ruled-out player itself.
         candidates = [
             (pid, proj) for pid, proj in projections.items()
-            if pid not in new_lineup and proj.get("projection", 0) > 0 and proj.get("salary", 5000) <= remaining_cap
+            if pid != out_player_id
+            and pid not in new_lineup
+            and proj.get("projection", 0) > 0
+            and proj.get("salary", 5000) <= remaining_cap
         ]
         # Sort by projection
         candidates.sort(key=lambda x: x[1].get("projection", 0), reverse=True)
@@ -94,34 +98,50 @@ class LateSwapManager:
             if same_team:
                 candidates = same_team + [c for c in candidates if c not in same_team]
 
+        # Happy path: a single affordable replacement exists — take the best
+        # (prefer same-team for stack retention when enabled).
         if candidates:
-            replacement_id = candidates[0][0]
-            new_lineup.append(replacement_id)
-        else:
-            # Need to drop another player to make salary work
-            # Find lowest projection in lineup to drop
-            if new_lineup:
-                # Sort lineup by projection ascending
-                lineup_with_proj = [(pid, projections.get(pid, {}).get("projection", 0)) for pid in new_lineup]
-                lineup_with_proj.sort(key=lambda x: x[1])
-                # Drop lowest
-                drop_pid = lineup_with_proj[0][0]
-                new_lineup = [pid for pid in new_lineup if pid != drop_pid]
-                salary_used = sum(projections.get(pid, {}).get("salary", 5000) for pid in new_lineup)
+            new_lineup.append(candidates[0][0])
+        elif new_lineup:
+            # Drop another player only when no single replacement fits the
+            # remaining cap ("Drop another player" option — Source: Using Late
+            # Swap support article, https://support.sabersim.com/en/articles/12079563-using-late-swap).
+            lineup_by_proj = sorted(
+                new_lineup,
+                key=lambda pid: projections.get(pid, {}).get("projection", 0),
+            )
+            for drop_pid in lineup_by_proj:
+                trial = [pid for pid in new_lineup if pid != drop_pid]
+                salary_used = sum(
+                    projections.get(pid, {}).get("salary", 5000) for pid in trial
+                )
                 remaining_cap = salary_cap - salary_used
-                # Retry
-                candidates = [
-                    (pid, proj) for pid, proj in projections.items()
-                    if pid not in new_lineup and proj.get("salary", 5000) <= remaining_cap
+                slots_to_fill = len(lineup) - len(trial)
+                trial_candidates = [
+                    (pid, proj)
+                    for pid, proj in projections.items()
+                    if pid not in trial
+                    and pid != out_player_id
+                    and proj.get("projection", 0) > 0
                 ]
-                candidates.sort(key=lambda x: x[1].get("projection", 0), reverse=True)
-                if candidates:
-                    new_lineup.append(candidates[0][0])
-                    new_lineup.append(drop_pid)  # Actually we dropped, need to add replacement for dropped too? Simplified
-                    # For simplicity, just return with one replacement
-                    new_lineup = new_lineup[:len(lineup)]  # keep same size
+                trial_candidates.sort(
+                    key=lambda x: x[1].get("projection", 0), reverse=True
+                )
+                # Greedily fill all open slots under the remaining cap
+                filled = []
+                cap_left = remaining_cap
+                for pid, proj in trial_candidates:
+                    sal = proj.get("salary", 5000)
+                    if sal <= cap_left:
+                        filled.append(pid)
+                        cap_left -= sal
+                    if len(filled) == slots_to_fill:
+                        break
+                if len(filled) == slots_to_fill:
+                    new_lineup = trial + filled
+                    break
 
-        return new_lineup[:len(lineup)]
+        return new_lineup[: len(lineup)]
 
     def auto_resim_loop(self, slate: List[Dict], poll_interval: int = 60, callback: Callable = None):
         """

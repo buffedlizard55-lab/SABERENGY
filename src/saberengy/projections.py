@@ -57,6 +57,7 @@ class ProjectionEngine:
                 "p25": float(np.percentile(arr, 25)),
                 "median_p50": float(np.percentile(arr, 50)),
                 "p75": float(np.percentile(arr, 75)),
+                "ceiling_p85": float(np.percentile(arr, 85)),  # docs: ceiling = 85th-95th percentile
                 "ceiling_p90": float(np.percentile(arr, 90)),
                 "p95": float(np.percentile(arr, 95)),
                 "std": float(np.std(arr)),
@@ -108,6 +109,7 @@ class ProjectionEngine:
                 "p25": data["p25"],
                 "p50": data["median_p50"],
                 "p75": data["p75"],
+                "p85": data["ceiling_p85"],
                 "p90": data["ceiling_p90"],
                 "p95": data["p95"],
                 "std": data["std"],

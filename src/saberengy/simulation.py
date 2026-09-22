@@ -18,7 +18,7 @@ Implementation notes (no hallucinations):
 - Correlation emerges naturally from co-occurrence in same game script (QB+WR both boom in same sim).
 
 Limitations flagged:
-- Proprietary coaching model approximated — gap ~5-10% vs calibrated model.
+- Proprietary coaching model approximated — accuracy gap unquantified (unsourced "~5-10%" figure removed 2026-09-22).
 - Needs ML training on 5 years PBP for full parity (see roadmap).
 """
 from dataclasses import dataclass, field

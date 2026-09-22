@@ -5,7 +5,7 @@ Verified from:
 - https://support.sabersim.com/en/articles/12078831-how-projections-work
   "Ownership Projections: Contest-specific, Field-based, Dynamic"
   "Ownership is a descriptive statistic of our field lineups, which are large sets of simulated lineups that represent how the field is expected to build for each contest type."
-  "Dynamic: Ownership projections update automatically whenever simulations rerun, often within minutes of breaking news"
+  "Dynamic: Ownership projections update automatically whenever simulations rerun, usually within minutes of breaking news"
 
 - https://support.sabersim.com/en/articles/12079199-how-contest-sims-work
   "Opponents don’t play the same way in a low-stakes 150-max as in a high-stakes single-entry, so SaberSim doesn’t model them the same. Instead, it builds multiple sets of opponent lineups using industry-aggregated projections that reflect actual construction and ownership trends"
@@ -205,10 +205,15 @@ class OwnershipModel:
 
     def leverage_score(self, projections: Dict[str, Dict], ownership: Dict[str, float], sim_win_rates: Dict[str, float] = None) -> Dict[str, float]:
         """
-        Leverage = Sim Win Rate - Projected Ownership
-        Verified concept from third-party but matches SaberSim adjusted ownership logic.
-        Source: https://onlydfs.com/blog/best-mlb-dfs-optimizer-tools-2026.html
-        "Leverage score (sim win rate minus projected ownership) displayed alongside every projection."
+        Leverage proxy = Sim Win Rate - Projected Ownership.
+
+        ATTRIBUTION (verified):
+        - Third-party definition: "Leverage score (sim win rate minus projected ownership)"
+          Source (THIRD-PARTY, affiliate blog — flagged): https://onlydfs.com/blog/best-mlb-dfs-optimizer-tools-2026.html
+        - SaberSim's own official definition of leverage is qualitative:
+          "Leverage: lineups that look different from the field."
+          Source: https://support.sabersim.com/en/articles/12079141-building-lineups
+        SaberSim does NOT publish an exact leverage formula — this is a proxy, flagged in LIMITATIONS.md.
         """
         leverage = {}
         for pid in projections.keys():
