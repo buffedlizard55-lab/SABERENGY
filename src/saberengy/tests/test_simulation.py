@@ -67,7 +67,7 @@ def test_full_pipeline():
     assert "summary" in result
     print(f"✓ Contest Sims: ROI, Win Rate, Cash Rate, ROI StdDev")
 
-    print("\nAll tests passed — verified pipeline matches SaberSim docs")
+    print("\nSchematic pipeline smoke test passed. Not a SaberSim parity claim.")
 
 if __name__ == "__main__":
     test_full_pipeline()

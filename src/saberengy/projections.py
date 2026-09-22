@@ -1,17 +1,11 @@
-"""
-Projection engine — converts game scripts into point projections + percentiles.
+"""Mean and percentile summary of whatever game scripts the caller passes.
 
-Verified from:
-- https://support.sabersim.com/en/articles/12078831-how-projections-work
-  "Point projections in SaberSim don’t come from averages—they come from thousands of play-by-play simulations"
-  "In SaberSim, a player’s point projection is the average of their outcomes across all simulations"
-  "Floor Projections: You can evaluate a player's floor by looking at their 10th-25th percentile."
-  "Median Projections: The 50th percentile represents a player's median projection"
+SaberSim's public page says their projection is the average of simulated
+trials, with floor around the 10th-25th percentile and ceiling around the
+85th-95th:
+https://support.sabersim.com/en/articles/12078831-how-projections-work
 
-Also:
-- Detailed Stat Projections show a player's stat-by-stat outputs that come directly from the play-by-play simulations.
-
-No hallucinations — implements exactly what docs describe.
+This module only computes those summaries. It does not create the trials.
 """
 from typing import List, Dict
 import numpy as np
@@ -71,9 +65,8 @@ class ProjectionEngine:
 
     def get_detailed_stats(self) -> Dict[str, Dict]:
         """
-        Aggregate detailed stat projections (e.g., yards, TDs) that come directly from PBP sims.
-        Verified: "Detailed Stat Projections show a player's stat-by-stat outputs that come directly from the play-by-play simulations."
-        Source: https://support.sabersim.com/en/articles/12078831-how-projections-work
+        Average of stat dicts already stored on the outcomes. Empty if the
+        caller did not put counting stats on the outcomes.
         """
         # Group detailed stats
         by_player_stats = defaultdict(list)

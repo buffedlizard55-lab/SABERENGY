@@ -9,7 +9,9 @@ Verified from:
   "Notifications: Browser and mobile alerts when players in your entries are ruled out or projections swing sharply."
   "Automatic Resims: Every time projections or news update, SaberSim reruns its play-by-play sims"
 
-No hallucinations — implements polling loop and quick swap logic.
+This module does not poll a live injury feed. check_news() invents a random
+OUT about 5% of the time so the swap function can be exercised. Do not treat
+that as news.
 """
 
 from typing import List, Dict, Callable
@@ -30,9 +32,8 @@ class LateSwapManager:
 
     def check_news(self, slate: List[Dict], current_projections: Dict) -> Dict:
         """
-        Poll official injury APIs for news.
-        Returns dict of changes: {player_id: {"status": "OUT", "new_projection": 0}}
-        In real implementation, would call:
+        Does not poll an injury API. Returns a random OUT about 5% of the time.
+        A real implementation would call:
         - NBA: https://stats.nba.com injury report
         - NFL: https://api.sportradar.com/nfl/official/.../injuries
         - MLB: https://statsapi.mlb.com/api/v1/teams/.../roster

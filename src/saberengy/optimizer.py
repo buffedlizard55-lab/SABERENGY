@@ -1,241 +1,305 @@
+"""Lineup builder with DraftKings roster constraints.
+
+Sim mode samples a game script and builds the best legal lineup for that
+script. That matches the public SaberSim description of building from
+simulated scripts rather than a single average:
+
+https://support.sabersim.com/en/articles/12079141-building-lineups
+
+The slider formulas below are ours. SaberSim publishes the direction of
+the Correlation and Sim Diversity sliders in that article. It does not
+publish the equation. Ownership Fade is described on a video page whose
+transcript is not in the HTML, so the fade formula is flagged as an
+approximation.
+
+Salary cap is enforced only when every candidate has a salary. Official
+DraftKings salaries are not on a keyless public API we could fetch on
+2026-09-22. Lineups built without salaries are labeled research lineups
+and are not valid contest entries.
 """
-Lineup Optimizer — Sim Mode + Optimizer Mode
 
-Verified from:
-- https://support.sabersim.com/en/articles/12079141-building-lineups
-  "SaberSim starts with play-by-play simulations. We simulate every play and decision to build thousands of realistic game scripts. These scripts capture how players perform together, not just in isolation. This is the engine behind the Sim Optimizer. Unlike traditional optimizers that rely on averages, SaberSim builds lineups directly from real game simulations."
-  "Each simulation creates a full game script: who scores, who busts, and how players correlate. When you hit Build Lineups, SaberSim samples from these simulations to construct your lineups. Each lineup is a single bet on how a slate could realistically play out"
-  "A QB + WR stack happens when they both excel in the same game script. A bring-back appears because the opposing WR scored well in that script. A full game stack forms because the game went to overtime or turned into a shootout."
+from __future__ import annotations
 
-- https://support.sabersim.com/en/articles/12079141-building-lineups-in-sabersim
-  "Correlation Slider: Controls how strongly correlated plays are prioritized. Higher = more natural stacks"
-  "Sim Diversity: Controls how many different simulations are used. Higher = more variety"
-
-- https://www.sabersim.com/video/dfs-lineup-optimizers-are-obsolete-you-need-a-simulator
-  "Correlation, this controls the impact of correlation on your lineups. A higher weight is going to favor players who are positively correlated"
-  "Ownership fade, and this just controls how much of a factor you want ownership to be in your lineups. The higher you set it, the more your ownerships will fade"
-  "High variance, highly owned players are going to be faded more aggressively by the optimizer automatically than low variance"
-
-No hallucinations — implements Sim Mode sampling from game scripts.
-"""
-
-from typing import List, Dict, Tuple
 import random
-import numpy as np
 from collections import defaultdict
+from typing import Dict, List, Optional, Sequence, Tuple
+
+import numpy as np
+
+from .roster import RosterRules, normalize_position, slot_order, validate_lineup
 from .simulation import GameScript
 
+
 class OptimizerMode:
-    """Traditional optimizer using static projections — for cash games."""
-    def __init__(self, salary_cap: int = 50000, lineup_size: int = 9):
+    """Static-projection builder. SaberSim describes this as cash-oriented."""
+
+    def __init__(self, salary_cap: int = 50000, lineup_size: int = 9, rules: Optional[RosterRules] = None):
         self.salary_cap = salary_cap
         self.lineup_size = lineup_size
+        self.rules = rules
 
-    def build(self, projections: Dict[str, Dict], num_lineups: int = 100, constraints: Dict = None) -> List[List[str]]:
-        """
-        Simple knapSack-style optimizer: pick highest projection under salary cap.
-        This is baseline — SaberSim's Optimizer Mode does similar but with stacking rules.
-        """
-        # Edge case handling
-        if not projections:
-            return []
-        effective_size = min(self.lineup_size, len(projections))
-
-        # Sort by projection
-        sorted_players = sorted(projections.items(), key=lambda x: x[1].get("projection", 0), reverse=True)
-        lineups = []
-        for _ in range(num_lineups):
-            # Greedy with randomness
-            lineup = []
-            salary_used = 0
-            # Shuffle top 30% for diversity
-            candidates = [p for p in sorted_players[:max(20, len(sorted_players)//3)]]
-            random.shuffle(candidates)
-            for pid, proj in candidates:
-                sal = proj.get("salary", 5000)
-                if salary_used + sal <= self.salary_cap and len(lineup) < effective_size:
-                    if pid not in lineup:
-                        lineup.append(pid)
-                        salary_used += sal
-                if len(lineup) >= effective_size:
-                    break
-            # Fill remaining with random if needed
-            if len(lineup) < effective_size:
-                remaining = [pid for pid, _ in sorted_players if pid not in lineup]
-                for pid in remaining:
-                    sal = projections[pid].get("salary", 5000)
-                    if salary_used + sal <= self.salary_cap:
-                        lineup.append(pid)
-                        salary_used += sal
-                    if len(lineup) >= effective_size:
-                        break
-            if len(lineup) == effective_size:
-                lineups.append(lineup)
-        return lineups
+    def build(
+        self,
+        projections: Dict[str, Dict],
+        num_lineups: int = 20,
+        seed: int = 1,
+    ) -> List[List[str]]:
+        rng = random.Random(seed)
+        if self.rules is None:
+            return _legacy_greedy(projections, num_lineups, self.salary_cap, self.lineup_size, rng)
+        return _build_many(
+            projections,
+            self.rules,
+            num_lineups,
+            rng,
+            score_of=lambda pid, row: float(row.get("projection") or 0),
+            enforce_salary=_salaries_present(projections),
+        )
 
 
 class SimOptimizer:
-    """
-    Sim Mode optimizer — builds lineups directly from game simulations.
-
-    "SaberSim runs thousands of complete play-by-play simulations for each slate.
-    Each simulation creates a full game script: who scores, who busts, and how players correlate.
-    When you hit Build Lineups, SaberSim samples from these simulations to construct your lineups."
-    Source: Building Lineups support article.
-    """
-
     def __init__(
         self,
         salary_cap: int = 50000,
         lineup_size: int = 9,
-        correlation_weight: float = 0.5,  # 0-1 slider
-        sim_diversity: float = 0.5,  # 0-1 slider
-        ownership_fade: float = 0.5,  # 0-1 slider
+        correlation_weight: float = 0.5,
+        sim_diversity: float = 0.5,
+        ownership_fade: float = 0.3,
         seed: int = 42,
+        rules: Optional[RosterRules] = None,
+        max_exposure: float = 0.6,
     ):
         self.salary_cap = salary_cap
         self.lineup_size = lineup_size
         self.correlation_weight = correlation_weight
         self.sim_diversity = sim_diversity
         self.ownership_fade = ownership_fade
-        random.seed(seed)
-        np.random.seed(seed)
+        self.seed = seed
+        self.rules = rules
+        self.max_exposure = max_exposure
 
     def build(
         self,
         game_scripts: List[GameScript],
         projections: Dict[str, Dict],
-        ownership: Dict[str, float] = None,
-        num_lineups: int = 500,
-        correlation_matrix: Dict[Tuple[str, str], float] = None,
+        ownership: Optional[Dict[str, float]] = None,
+        num_lineups: int = 50,
+        correlation_matrix: Optional[Dict[Tuple[str, str], float]] = None,
     ) -> List[List[str]]:
-        """
-        Builds lineups by sampling from game scripts.
-
-        Logic:
-        1. Sample a game script (or multiple scripts for diversity)
-        2. In that script, players have correlated outcomes — pick highest scoring players in that script
-        3. Apply correlation weight: boost lineups where players are positively correlated (same game, same team)
-        4. Apply ownership fade: penalize highly owned players, especially high variance chalk
-        5. Apply sim diversity: control how many unique scripts are used
-
-        Returns list of lineups (player_ids)
-        """
-
-        # Group scripts by sim_index to get full slate outcomes
-        by_sim = defaultdict(list)
-        for gs in game_scripts:
-            by_sim[gs.sim_index].append(gs)
-
-        sim_indices = list(by_sim.keys())
-        # Sim Diversity controls how many unique sims we sample from
-        # Low diversity = sample from fewer sims (tighter), high = more variety
-        num_unique_sims_to_use = max(1, int(len(sim_indices) * (0.2 + 0.8 * self.sim_diversity)))
-        # Sample which sims to use
-        chosen_sim_indices = random.sample(sim_indices, min(num_unique_sims_to_use, len(sim_indices)))
-
-        # Precompute player points per sim_index (full slate)
-        points_by_sim = {}
-        for sim_idx in sim_indices:
-            pts = {}
-            for gs in by_sim[sim_idx]:
-                for outcome in gs.player_outcomes:
-                    pts[outcome.player_id] = pts.get(outcome.player_id, 0) + outcome.fantasy_points
-            points_by_sim[sim_idx] = pts
-
-        lineups = []
+        rng = random.Random(self.seed)
+        if not game_scripts:
+            return OptimizerMode(self.salary_cap, self.lineup_size, self.rules).build(
+                projections, num_lineups, seed=self.seed
+            )
+        if self.rules is None:
+            return _legacy_from_scripts(
+                game_scripts,
+                projections,
+                ownership or {},
+                num_lineups,
+                rng,
+                self.salary_cap,
+                self.lineup_size,
+                self.sim_diversity,
+                self.ownership_fade,
+            )
+        by_sim = defaultdict(dict)
+        for script in game_scripts:
+            for outcome in script.player_outcomes:
+                by_sim[script.sim_index][outcome.player_id] = (
+                    by_sim[script.sim_index].get(outcome.player_id, 0.0) + outcome.fantasy_points
+                )
+        sim_ids = list(by_sim)
+        if not sim_ids:
+            return []
+        keep = max(1, int(len(sim_ids) * (0.15 + 0.85 * self.sim_diversity)))
+        chosen_sims = sim_ids if keep >= len(sim_ids) else rng.sample(sim_ids, keep)
+        enforce_salary = _salaries_present(projections)
+        lineups: List[List[str]] = []
+        exposure = defaultdict(int)
         attempts = 0
-        max_attempts = num_lineups * 10
-
-        while len(lineups) < num_lineups and attempts < max_attempts:
+        while len(lineups) < num_lineups and attempts < num_lineups * 25:
             attempts += 1
-            # Sample a sim index (with replacement for diversity)
-            sim_idx = random.choice(chosen_sim_indices)
-            player_points = points_by_sim[sim_idx]
+            sim_idx = rng.choice(chosen_sims)
+            points = by_sim[sim_idx]
 
-            # Score players in this sim with adjustments
-            scored_players = []
-            for pid, pts in player_points.items():
-                proj = projections.get(pid, {})
-                salary = proj.get("salary", 5000)
-                if salary == 0:
-                    continue
+            def score_of(pid: str, row: dict, points=points) -> float:
+                base = float(points.get(pid, row.get("projection") or 0))
+                own = (ownership or {}).get(pid, 0.0)
+                std = float(row.get("std") or 0)
+                mean = float(row.get("projection") or base or 1)
+                variance = std / mean if mean else 0.4
+                # Approximation of the video-described fade. Not an official equation.
+                fade = 1.0 - self.ownership_fade * own * (1.0 + 0.5 * variance)
+                return base * max(0.05, fade)
 
-                # Base score = points in this sim
-                score = pts
-
-                # Ownership fade adjustment
-                if ownership:
-                    own = ownership.get(pid, 0.1)
-                    # High owned players penalized more, especially if high variance
-                    # Variance proxy: std / mean
-                    std = proj.get("std", pts * 0.4)
-                    mean = proj.get("projection", pts)
-                    variance = std / mean if mean else 0.5
-                    # Fade formula: score *= (1 - ownership_fade * ownership * (1 + variance))
-                    fade_factor = 1 - self.ownership_fade * own * (1 + variance * 0.5)
-                    score *= max(0.1, fade_factor)
-
-                # Correlation boost will be applied at lineup level, not individual
-
-                scored_players.append((pid, score, proj.get("salary", 5000), pts))
-
-            # Sort by adjusted score descending
-            scored_players.sort(key=lambda x: x[1], reverse=True)
-
-            # Build lineup greedily picking top scoring in this sim under salary cap
-            lineup = []
-            salary_used = 0
-            lineup_points = {}  # pid -> raw points in this sim
-
-            for pid, adj_score, sal, raw_pts in scored_players:
-                if salary_used + sal <= self.salary_cap and len(lineup) < self.lineup_size:
-                    if pid not in lineup:
-                        lineup.append(pid)
-                        salary_used += sal
-                        lineup_points[pid] = raw_pts
-                if len(lineup) >= self.lineup_size:
-                    break
-
-            if len(lineup) < self.lineup_size:
+            lineup = _build_one(
+                projections,
+                self.rules,
+                rng,
+                score_of,
+                enforce_salary=enforce_salary,
+                correlation_weight=self.correlation_weight,
+                correlation_matrix=correlation_matrix,
+            )
+            if lineup is None:
                 continue
-
-            # Apply correlation weight: compute avg correlation within lineup
-            # Only apply probabilistic filter if we have many lineups already and weight is high
-            # To avoid rejecting too many, we only reject if lineup is very low corr and we have > 50% of target
-            if correlation_matrix and self.correlation_weight > 0 and len(lineups) > num_lineups * 0.3:
-                corr_sum = 0
-                corr_count = 0
-                for i, pid1 in enumerate(lineup):
-                    for pid2 in lineup[i+1:]:
-                        corr_val = correlation_matrix.get((pid1, pid2), 0)
-                        corr_sum += corr_val
-                        corr_count += 1
-                avg_corr = corr_sum / corr_count if corr_count else 0
-                if self.correlation_weight > 0.7 and avg_corr < -0.1:
-                    if random.random() < 0.3:
+            if self.max_exposure < 1 and lineups:
+                if any((exposure[pid] + 1) / num_lineups > self.max_exposure + 1e-9 for pid in lineup):
+                    if rng.random() < 0.8:
                         continue
-
+            ok, _reason = validate_lineup(lineup, projections, self.rules, enforce_salary=enforce_salary)
+            if not ok:
+                continue
             lineups.append(lineup)
-
+            for pid in lineup:
+                exposure[pid] += 1
         return lineups
 
-    def build_with_custom_metric(
-        self,
-        game_scripts: List[GameScript],
-        projections: Dict[str, Dict],
-        custom_metric: str = "projection * (ceiling_p90 / projection) * (1 + leverage)",
-        ownership: Dict[str, float] = None,
-        num_lineups: int = 500,
-    ) -> List[List[str]]:
-        """
-        Custom lineup ranking metric — Ultimate plan feature.
-        "Create your own lineup ranking metric using any combination of your data and ours"
-        Source: https://www.sabersim.com/pricing
 
-        custom_metric is a string formula using fields: projection, ceiling_p90, ownership, etc.
-        For simplicity, we parse limited expressions.
-        """
-        # This is a simplified version — real implementation would use safe eval
-        # We'll just use the default SaberScore proxy if custom_metric not parsed
-        return self.build(game_scripts, projections, ownership, num_lineups)
+def _legacy_from_scripts(
+    game_scripts,
+    projections,
+    ownership,
+    num_lineups,
+    rng,
+    salary_cap,
+    lineup_size,
+    sim_diversity,
+    ownership_fade,
+):
+    """Position-unaware sampler kept for the synthetic demo only.
+
+    These lineups are not DraftKings-legal. Pass RosterRules for legal builds.
+    """
+    by_sim = defaultdict(dict)
+    for script in game_scripts:
+        for outcome in script.player_outcomes:
+            by_sim[script.sim_index][outcome.player_id] = (
+                by_sim[script.sim_index].get(outcome.player_id, 0.0) + outcome.fantasy_points
+            )
+    sim_ids = list(by_sim)
+    if not sim_ids:
+        return []
+    keep = max(1, int(len(sim_ids) * (0.15 + 0.85 * sim_diversity)))
+    chosen = sim_ids if keep >= len(sim_ids) else rng.sample(sim_ids, keep)
+    lineups = []
+    attempts = 0
+    while len(lineups) < num_lineups and attempts < num_lineups * 20:
+        attempts += 1
+        points = by_sim[rng.choice(chosen)]
+        ranked = sorted(points, key=lambda pid: points[pid], reverse=True)
+        lineup = []
+        spent = 0
+        for pid in ranked:
+            row = projections.get(pid, {})
+            salary = int(row.get("salary") or 0)
+            own = ownership.get(pid, 0.0)
+            if ownership_fade and own > 0.45 and rng.random() < ownership_fade * 0.25:
+                continue
+            if spent + salary <= salary_cap and pid not in lineup:
+                lineup.append(pid)
+                spent += salary
+            if len(lineup) >= lineup_size:
+                break
+        if len(lineup) == lineup_size:
+            lineups.append(lineup)
+    return lineups
+
+
+def _salaries_present(projections: Dict[str, Dict]) -> bool:
+    if not projections:
+        return False
+    return all(row.get("salary") is not None for row in projections.values())
+
+
+def _legacy_greedy(projections, num_lineups, salary_cap, lineup_size, rng) -> List[List[str]]:
+    """Kept so older callers without roster rules still return a sized lineup.
+
+    These lineups are not DraftKings-legal. Callers that need legal lineups
+    must pass RosterRules.
+    """
+    ranked = sorted(projections.items(), key=lambda item: item[1].get("projection", 0), reverse=True)
+    size = min(lineup_size, len(ranked))
+    lineups = []
+    for _ in range(num_lineups):
+        lineup = []
+        spent = 0
+        order = ranked[:]
+        rng.shuffle(order)
+        order.sort(key=lambda item: item[1].get("projection", 0), reverse=True)
+        for pid, row in order:
+            sal = int(row.get("salary") or 0)
+            if pid in lineup:
+                continue
+            if spent + sal <= salary_cap and len(lineup) < size:
+                lineup.append(pid)
+                spent += sal
+            if len(lineup) >= size:
+                break
+        if len(lineup) == size:
+            lineups.append(lineup)
+    return lineups
+
+
+def _build_many(projections, rules, num_lineups, rng, score_of, enforce_salary) -> List[List[str]]:
+    lineups = []
+    attempts = 0
+    while len(lineups) < num_lineups and attempts < num_lineups * 30:
+        attempts += 1
+        lineup = _build_one(projections, rules, rng, score_of, enforce_salary=enforce_salary)
+        if lineup is None:
+            continue
+        ok, _ = validate_lineup(lineup, projections, rules, enforce_salary=enforce_salary)
+        if ok:
+            lineups.append(lineup)
+    return lineups
+
+
+def _build_one(
+    projections: Dict[str, Dict],
+    rules: RosterRules,
+    rng: random.Random,
+    score_of,
+    enforce_salary: bool,
+    correlation_weight: float = 0.0,
+    correlation_matrix: Optional[Dict[Tuple[str, str], float]] = None,
+) -> Optional[List[str]]:
+    remaining = dict(projections)
+    chosen: List[str] = []
+    spent = 0
+    for index in slot_order(rules):
+        slot = rules.slots[index]
+        slots_left = rules.lineup_size - len(chosen)
+        candidates = []
+        for pid, row in remaining.items():
+            pos = normalize_position(rules.sport, row.get("position", ""))
+            if pos not in slot.eligible:
+                continue
+            salary = int(row.get("salary") or 0)
+            if enforce_salary and spent + salary > rules.salary_cap:
+                continue
+            score = score_of(pid, row)
+            if correlation_weight and chosen and correlation_matrix:
+                corr = np.mean([correlation_matrix.get((pid, other), 0.0) for other in chosen])
+                score *= 1.0 + correlation_weight * float(corr)
+            elif correlation_weight and chosen:
+                same = sum(1 for other in chosen if projections[other].get("team") == row.get("team"))
+                score *= 1.0 + correlation_weight * 0.15 * same
+            candidates.append((pid, score, salary))
+        if not candidates:
+            return None
+        candidates.sort(key=lambda item: item[1], reverse=True)
+        pool = candidates[: max(4, len(candidates) // 4)]
+        weights = [max(0.01, item[1]) for item in pool]
+        pick = rng.choices(pool, weights=weights, k=1)[0]
+        chosen.append(pick[0])
+        spent += pick[2]
+        del remaining[pick[0]]
+        _ = slots_left
+    games = {projections[pid].get("game_id") for pid in chosen}
+    games.discard(None)
+    games.discard("")
+    if rules.min_games and len(games) < rules.min_games:
+        return None
+    return chosen

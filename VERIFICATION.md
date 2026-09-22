@@ -1,7 +1,16 @@
-# VERIFICATION — No Hallucinations Guarantee
+# VERIFICATION
 
-Master claim list for SABERENGY. Every row links its source for manual review.
-All pages re-checked **2026-09-22** via direct page fetch (quote text confirmed present unless status says otherwise).
+This table records what public pages say. It is not a list of features this repository has rebuilt.
+
+Implementation status, 2026-09-22:
+
+- NFL Classic scoring lines used by `scoring.py` were re-read at https://www.draftkings.com/help/rules/1/1. The page lists the yardage, touchdown, reception, interception, bonus, and points-allowed tiers the scorer uses. It also lists fumbles, two-point conversions, and return scores, which this scorer does not apply.
+- The same page lists 9 roster spots, at least 2 games, and a $50,000 cap. It does not list an 8-player team cap.
+- https://www.draftkings.com/help/rules/2/2 returned the word “Busy” on a re-fetch this pass. The MLB table was not re-confirmed.
+- Pipeline numbers on the site come from `docs/run_summary.json`, not from this table.
+
+Master claim list. Every row links its source for manual review.
+Pages below were checked **2026-09-22** unless the status says otherwise.
 
 ## Master Source List
 

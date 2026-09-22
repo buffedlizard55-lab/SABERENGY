@@ -1,4 +1,15 @@
-"""
+"""Ownership sketch from field lineups.
+
+WARNING: FieldLineups.generate is not roster-legal. It samples player ids
+by weight. It does not fill DraftKings slots, does not require players from
+two games, and does not enforce the MLB hitter cap. Do not enter those
+lineups. Position-legal research lineups come from optimizer.OptimizerMode
+with roster.RosterRules, and only when a real salary file is present are
+they salary-cap legal.
+
+The 13 contest-type names are copied from the public pricing page. The
+weights below are unvalidated guesses, not SaberSim's field model.
+
 Ownership modeling — field lineups + contest-specific ownership.
 
 Verified from:
@@ -15,13 +26,20 @@ Verified from:
   "Auto-updating ownership for 13 contests: Flagship MME, Flagship 20-max, Flagship SE, High Stakes MME, High Stakes 20-Max, High Stakes SE, Low Stakes MME, Low Stakes 20-Max, Low Stakes SE, Medium Stakes MME, Medium Stakes 20-max, Medium Stakes SE, Winner-Take-All"
   "Live-updating Flagship ownership"
 
-No hallucinations — implements field lineup concept exactly as described.
+The quotes above describe SaberSim. This module does not implement that product.
 """
 
-from typing import List, Dict, Tuple
+from typing import Dict, List
 import random
+import warnings
 import numpy as np
-from collections import Counter, defaultdict
+from collections import Counter
+
+NOT_ROSTER_LEGAL = (
+    "FieldLineups samples ids by weight. Those lineups are not DraftKings-legal: "
+    "no slot fill, no two-game rule, no MLB hitter cap. Do not enter them."
+)
+_warned = False
 
 # 13 contest types verbatim from pricing page — verified source: https://www.sabersim.com/pricing
 CONTEST_TYPES_13 = [
@@ -99,6 +117,10 @@ class FieldLineups:
         projections: dict player_id -> {projection, salary, team, position, etc.}
         Returns: list of lineups, each lineup is list of player_ids
         """
+        global _warned
+        if not _warned:
+            warnings.warn(NOT_ROSTER_LEGAL, UserWarning, stacklevel=2)
+            _warned = True
         heuristic = self._contest_heuristic()
         player_ids = list(projections.keys())
 

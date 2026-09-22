@@ -1,0 +1,443 @@
+{
+  "generated_on": "2026-09-22",
+  "elapsed_seconds": 6.89,
+  "what_this_is": "Independent DFS research pipeline. Not affiliated with SaberSim. No SaberSim paywall was accessed.",
+  "salary_status": {
+    "official_salaries_used": false,
+    "reason": "DraftKings player pools and salaries are published inside an authenticated lobby, not as a keyless public API we could fetch.",
+    "rules_url": "https://www.draftkings.com/help/rules/1/1"
+  },
+  "data": {
+    "games": {
+      "url": "https://github.com/nflverse/nfldata/blob/master/data/games.csv",
+      "rows": 7548,
+      "max_gameday": "2027-01-10",
+      "license": "GitHub API returned null for nflverse/nfldata on 2026-09-22. Not marked CC-BY."
+    },
+    "player_weeks": {
+      "seasons": {
+        "2023": {
+          "status": "mirror",
+          "canonical_url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2023.csv",
+          "canonical_error": "URLError: <urlopen error TLS/SSL connection has been closed (EOF) (_ssl.c:992)>",
+          "mirror_url": "https://github.com/cwalenciak/the-odds-line/blob/master/player_stats/2023_player_stats.csv",
+          "mirror_license": "none declared (GitHub API license field null on 2026-09-22)"
+        },
+        "2024": {
+          "status": "mirror",
+          "canonical_url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2024.csv",
+          "canonical_error": "URLError: <urlopen error TLS/SSL connection has been closed (EOF) (_ssl.c:992)>",
+          "mirror_url": "https://github.com/cwalenciak/the-odds-line/blob/master/player_stats/2024_player_stats.csv",
+          "mirror_license": "none declared (GitHub API license field null on 2026-09-22)"
+        },
+        "2025": {
+          "status": "mirror",
+          "canonical_url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2025.csv",
+          "canonical_error": "URLError: <urlopen error TLS/SSL connection has been closed (EOF) (_ssl.c:992)>",
+          "mirror_url": "https://github.com/cwalenciak/the-odds-line/blob/master/player_stats/2025_player_stats.csv",
+          "mirror_license": "none declared (GitHub API license field null on 2026-09-22)"
+        }
+      },
+      "canonical_license": "CC-BY-4.0",
+      "canonical_repo": "https://github.com/nflverse/nflverse-data",
+      "source_used": "community-mirror"
+    }
+  },
+  "game_environment_forward_tests": {
+    "2026_week_1": {
+      "n": 16,
+      "mae_margin_model": 11.170104166666667,
+      "mae_margin_market": 11.28125,
+      "mae_total_model": 11.815416666666668,
+      "mae_total_market": 11.6875,
+      "note": "Model mean is the market line plus the training residual mean. It should be close to the market, not magically better. A large gap vs the market would mean the residual mean is biased.",
+      "training_games": 6967,
+      "spread_correlation": 0.43076203963554327,
+      "spread_example": {
+        "game": "BAL @ KC",
+        "season": 2024,
+        "week": 1,
+        "spread_line": 3.0,
+        "home_score": 27.0,
+        "away_score": 20.0,
+        "note": "positive spread_line treated as expected home margin"
+      }
+    },
+    "2026_week_2": {
+      "n": 16,
+      "mae_margin_model": 11.895208333333334,
+      "mae_margin_market": 11.84375,
+      "mae_total_model": 10.810833333333333,
+      "mae_total_market": 10.6875,
+      "note": "Model mean is the market line plus the training residual mean. It should be close to the market, not magically better. A large gap vs the market would mean the residual mean is biased.",
+      "training_games": 6983,
+      "spread_correlation": 0.4305504073671631,
+      "spread_example": {
+        "game": "BAL @ KC",
+        "season": 2024,
+        "week": 1,
+        "spread_line": 3.0,
+        "home_score": 27.0,
+        "away_score": 20.0,
+        "note": "positive spread_line treated as expected home margin"
+      }
+    },
+    "2026_week_3_not_played": {
+      "n": 0,
+      "note": "no completed games with a spread for this week"
+    }
+  },
+  "player_forward_tests": {
+    "2024_week_17": {
+      "metrics": {
+        "n": 333,
+        "mae_model": 5.016966668241953,
+        "mae_trailing_mean": 4.924817074301241,
+        "model_beats_trailing_mean": false,
+        "correlation_model": 0.6279767828043759,
+        "correlation_trailing_mean": 0.6566197176471206,
+        "scoring": "partial DraftKings offense (no fumbles, 2-point conversions, or return TDs)",
+        "scoring_url": "https://www.draftkings.com/help/rules/1/1"
+      },
+      "model": {
+        "season": 2024,
+        "week": 17,
+        "n_sims": 80,
+        "training_games": 6663,
+        "spread_correlation": 0.4265185102330952,
+        "spread_convention": "positive spread_line = expected home margin (measured)",
+        "spread_example": {
+          "game": "BAL @ KC",
+          "season": 2024,
+          "week": 1,
+          "spread_line": 3.0,
+          "home_score": 27.0,
+          "away_score": 20.0,
+          "note": "positive spread_line treated as expected home margin"
+        },
+        "pass_intercept": 33.13183593750001,
+        "pass_slope": -0.1382136054165173,
+        "pass_std": 7.42893470287548,
+        "pass_fit_n": 1024,
+        "pool_size": 478,
+        "lookback_weeks": 6,
+        "team_of_note": 478
+      }
+    },
+    "2025_week_3": {
+      "metrics": {
+        "n": 303,
+        "mae_model": 4.1477378198154,
+        "mae_trailing_mean": 4.366604537841967,
+        "model_beats_trailing_mean": true,
+        "correlation_model": 0.6016691194046143,
+        "correlation_trailing_mean": 0.6017324759195605,
+        "scoring": "partial DraftKings offense (no fumbles, 2-point conversions, or return TDs)",
+        "scoring_url": "https://www.draftkings.com/help/rules/1/1"
+      },
+      "model": {
+        "season": 2025,
+        "week": 3,
+        "n_sims": 80,
+        "training_games": 6727,
+        "spread_correlation": 0.4283619452006252,
+        "spread_convention": "positive spread_line = expected home margin (measured)",
+        "spread_example": {
+          "game": "BAL @ KC",
+          "season": 2024,
+          "week": 1,
+          "spread_line": 3.0,
+          "home_score": 27.0,
+          "away_score": 20.0,
+          "note": "positive spread_line treated as expected home margin"
+        },
+        "pass_intercept": 33.120659722222214,
+        "pass_slope": -0.13176186284442531,
+        "pass_std": 7.455017250763036,
+        "pass_fit_n": 1152,
+        "pool_size": 401,
+        "lookback_weeks": 6,
+        "team_of_note": 401
+      }
+    }
+  },
+  "lineups": {
+    "slate": "2025 week 3 regular season, historical illustration only",
+    "not_the_current_slate": true,
+    "label": "research lineups, salary cap NOT applied",
+    "reason": "DraftKings salaries were not available from a keyless public endpoint on 2026-09-22",
+    "rules_url": "https://www.draftkings.com/help/rules/1/1",
+    "n_lineups": 15,
+    "all_position_legal": true,
+    "salary_cap_applied": false,
+    "name_note": "Names are copied from the weekly file. The community mirror abbreviates them (for example J.Goff). They are not a DraftKings player-pool export.",
+    "sample": [
+      [
+        "J.Goff QB",
+        "B.Robinson RB",
+        "K.Walker RB",
+        "D.Hopkins WR",
+        "L.McConkey WR",
+        "N.Collins WR",
+        "B.Bowers TE",
+        "KC DST DST",
+        "D.Achane RB"
+      ],
+      [
+        "J.Goff QB",
+        "J.Williams RB",
+        "B.Irving RB",
+        "T.McLaurin WR",
+        "J.Meyers WR",
+        "L.McConkey WR",
+        "S.LaPorta TE",
+        "BUF DST DST",
+        "G.Pickens WR"
+      ],
+      [
+        "J.Allen QB",
+        "D.Montgomery RB",
+        "A.Kamara RB",
+        "N.Collins WR",
+        "D.Samuel WR",
+        "D.Hopkins WR",
+        "H.Fannin TE",
+        "GB DST DST",
+        "G.Pickens WR"
+      ]
+    ],
+    "contest_sim_note": "Synthetic payout table for the engine only. Not a real DraftKings contest. Redraws are independent; within-game correlation was used to build the projection, not this contest redraw.",
+    "contest_summary": {
+      "num_sims": 40,
+      "num_my_lineups": 5,
+      "num_field_lineups": 10,
+      "field_subsampled": false,
+      "max_field_per_sim": 1500,
+      "entry_fee": 10.0,
+      "payout_structure_head": [
+        1000,
+        500,
+        300,
+        200,
+        150,
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "metrics": [
+        "roi",
+        "median_roi",
+        "max_roi",
+        "min_roi",
+        "win_rate",
+        "cash_rate",
+        "roi_std",
+        "dupes"
+      ],
+      "source": "https://support.sabersim.com/en/articles/12079199-how-contest-sims-work",
+      "interpretable": false,
+      "why_not_interpretable": "Field is the same 10 research lineups. ROI from that smoke test is not a contest result."
+    }
+  },
+  "upcoming_nfl_week": {
+    "season": 2026,
+    "week": 3,
+    "source": "https://github.com/nflverse/nfldata/blob/master/data/games.csv",
+    "spread_convention": "positive spread_line = expected home margin, measured on earlier seasons in the same file",
+    "player_projections": "not produced \u2014 canonical 2026 weekly player file could not be downloaded",
+    "games": [
+      {
+        "gameday": "2026-09-24",
+        "matchup": "ATL @ GB",
+        "spread_line": 6.0,
+        "total_line": 43.5,
+        "away_qb": "Michael Penix Jr.",
+        "home_qb": "Jordan Love",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "LAC @ BUF",
+        "spread_line": 7.0,
+        "total_line": 50.5,
+        "away_qb": "Justin Herbert",
+        "home_qb": "Josh Allen",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "CAR @ CLE",
+        "spread_line": -2.5,
+        "total_line": 42.5,
+        "away_qb": "Bryce Young",
+        "home_qb": "Deshaun Watson",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "NYJ @ DET",
+        "spread_line": 6.5,
+        "total_line": 47.5,
+        "away_qb": "Geno Smith",
+        "home_qb": "Jared Goff",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "HOU @ IND",
+        "spread_line": -2.5,
+        "total_line": 42.5,
+        "away_qb": "C.J. Stroud",
+        "home_qb": "Daniel Jones",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "NE @ JAX",
+        "spread_line": 3.0,
+        "total_line": 45.5,
+        "away_qb": "Drake Maye",
+        "home_qb": "Trevor Lawrence",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "KC @ MIA",
+        "spread_line": -11.5,
+        "total_line": 46.5,
+        "away_qb": "Patrick Mahomes",
+        "home_qb": "Malik Willis",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "TEN @ NYG",
+        "spread_line": 2.5,
+        "total_line": 39.5,
+        "away_qb": "Cam Ward",
+        "home_qb": "Jaxson Dart",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "CIN @ PIT",
+        "spread_line": -3.5,
+        "total_line": 42.5,
+        "away_qb": "Joe Burrow",
+        "home_qb": "Aaron Rodgers",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "SEA @ WAS",
+        "spread_line": -7.0,
+        "total_line": 40.5,
+        "away_qb": "Drew Lock",
+        "home_qb": "Jayden Daniels",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "ARI @ SF",
+        "spread_line": 8.5,
+        "total_line": 47.5,
+        "away_qb": "Jacoby Brissett",
+        "home_qb": "Brock Purdy",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "MIN @ TB",
+        "spread_line": -1.5,
+        "total_line": 42.5,
+        "away_qb": "Kyler Murray",
+        "home_qb": "Baker Mayfield",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "BAL @ DAL",
+        "spread_line": -3.5,
+        "total_line": 52.5,
+        "away_qb": "Lamar Jackson",
+        "home_qb": "Dak Prescott",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "LV @ NO",
+        "spread_line": 3.0,
+        "total_line": 43.5,
+        "away_qb": "Kirk Cousins",
+        "home_qb": "Tyler Shough",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-27",
+        "matchup": "LA @ DEN",
+        "spread_line": -2.5,
+        "total_line": 45.5,
+        "away_qb": "Matthew Stafford",
+        "home_qb": "Bo Nix",
+        "played": false
+      },
+      {
+        "gameday": "2026-09-28",
+        "matchup": "PHI @ CHI",
+        "spread_line": -4.5,
+        "total_line": 41.5,
+        "away_qb": "Jalen Hurts",
+        "home_qb": "Tyson Bagent",
+        "played": false
+      }
+    ]
+  },
+  "irregularities": [
+    {
+      "week": 1,
+      "gameday": "2026-09-13",
+      "matchup": "CHI 59 @ CAR 37",
+      "spread_line": -3.0,
+      "total_line": 47.5,
+      "actual_total": 96.0,
+      "flag": "extreme total vs the posted total_line; review for data error before treating as a normal game"
+    },
+    {
+      "week": 2,
+      "gameday": "2026-09-17",
+      "matchup": "DET 31 @ BUF 41",
+      "spread_line": 5.5,
+      "total_line": 54.5,
+      "actual_total": 72.0,
+      "flag": "extreme total vs the posted total_line; review for data error before treating as a normal game"
+    },
+    {
+      "week": 1,
+      "gameday": "2026-09-13",
+      "matchup": "BUF 36 @ HOU 31",
+      "spread_line": -1.5,
+      "total_line": 44.5,
+      "actual_total": 67.0,
+      "flag": "extreme total vs the posted total_line; review for data error before treating as a normal game"
+    }
+  ],
+  "blocked": [
+    {
+      "item": "nflverse stats_player_week_2026.csv",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2026.csv",
+      "status": "asset is listed on the stats_player release; download failed TLS to release-assets.githubusercontent.com"
+    },
+    {
+      "item": "MLB Stats API from this sandbox",
+      "url": "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=2026-09-22",
+      "status": "TLS connection closed from the sandbox. The same URL returned JSON via an external fetch on 2026-09-22 (16 games). Live MLB slate was not scored inside the sandbox."
+    },
+    {
+      "item": "DraftKings salaries",
+      "url": "https://www.draftkings.com/help/rules/1/1",
+      "status": "rules page is public; salary file is not"
+    }
+  ]
+}

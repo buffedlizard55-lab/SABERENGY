@@ -1,28 +1,19 @@
-"""
-Play-by-play Monte Carlo simulation engine — core of SaberSim reverse engineering.
+"""Schematic game-script sampler for the synthetic demo.
 
-Verified methodology from official docs:
-- "SaberSim uses a one-of-a-kind play-by-play simulator to build every game from scratch, one play at a time, thousands of times"
-  Source: https://support.sabersim.com/en/articles/12078831-how-projections-work
-- "Each sim tells a complete story of how the game unfolds: who scores, who busts, and how players correlate. Each sim includes strategy, play-calling, coaching decisions, and game flow."
-  Same source
-- "Models strategy, coaching tendencies, clock effects, player skill sets, and matchup dynamics"
-  Same source FAQ
+This is not the calibrated NFL model. That model is nfl_model.py and uses
+public schedule and weekly counting stats. This file does not download
+nflverse, nba_api, or MLB Stats API data, and it does not use DraftKings
+Sportsbook odds.
 
-Implementation notes (no hallucinations):
-- We do NOT have SaberSim's proprietary coaching tendency weights. We approximate with open data:
-  - NFL: nflverse EPA + historical play-call rates (https://github.com/nflverse/nflverse-data)
-  - NBA: pace + usage from stats.nba.com via nba_api (https://github.com/swar/nba_api)
-  - MLB: park factors, weather, batting order, pitcher quality from MLB StatsAPI (https://statsapi.mlb.com/)
-- This module is deterministic with seed for testing.
-- Correlation emerges naturally from co-occurrence in same game script (QB+WR both boom in same sim).
+SaberSim's public docs say their product simulates games play-by-play:
+https://support.sabersim.com/en/articles/12078831-how-projections-work
 
-Limitations flagged:
-- Proprietary coaching model approximated — accuracy gap unquantified (unsourced "~5-10%" figure removed 2026-09-22).
-- Needs ML training on 5 years PBP for full parity (see roadmap).
+This sampler does not do that. It draws a total, a home share, and a
+per-team factor so a quarterback and his own receivers move together in
+the demo. The factor is not a published SaberSim weight.
 """
 from dataclasses import dataclass, field
-from typing import List, Dict, Tuple, Optional
+from typing import Dict, List, Tuple
 import random
 import math
 import numpy as np
@@ -58,19 +49,11 @@ class GameScript:
     game_flow: str = ""  # e.g., "trailing_team_pass_heavy"
 
 class Simulator:
-    """
-    Monte Carlo play-by-play simulator.
+    """Schematic sampler. Not play-by-play, and not a sportsbook fetch.
 
-    For each game, runs n_sims simulations.
-    Each simulation produces a GameScript with correlated player outcomes.
-
-    Example (NFL):
-    - Sample game total and spread from Vegas (official source: DK Sportsbook)
-    - Simulate play-by-play using team pace, pass rate over expected, etc.
-    - Distribute fantasy points based on usage, target share, etc.
-    - Correlation naturally emerges: if QB booms, WRs in same game boom in same sim.
-
-    Verified against SaberSim docs — methodology matches, not exact proprietary weights.
+    vegas_total is whatever the caller passes. Same-team quarterback and
+    receiver draws share a factor so the demo can show correlation. That
+    factor is not a SaberSim weight.
     """
 
     def __init__(self, sport: str = "NFL", n_sims: int = 1000, seed: int = 42):
@@ -114,8 +97,7 @@ class Simulator:
         """NFL: model game script, pass volume rises when trailing."""
         scripts = []
         for sim_idx in range(self.n_sims):
-            # Sample game environment
-            # Total points ~ normal around vegas_total, std 10
+            # Schematic environment. vegas_total is caller-supplied, not a sportsbook fetch.
             total_pts = max(10, np.random.normal(vegas_total, 10))
             # Home advantage
             home_share = np.random.normal(0.52, 0.08)  # home scores ~52% of points
@@ -133,27 +115,24 @@ class Simulator:
                 flow = "neutral_shootout" if is_shootout else "neutral"
 
             outcomes = []
-            # For each player, sample fantasy points correlated to game flow
-            # QB-WR correlation: if QB booms, WRs boom in same sim
-            qb_boom_factor = np.random.normal(1.0, 0.35)  # 1.0 = average, >1 boom
+            # One boom factor per team so a QB and his own WR/TE share a script.
+            # This is a schematic, not the calibrated model in nfl_model.py.
+            home_qb_factor = float(np.random.normal(1.0, 0.35))
+            away_qb_factor = float(np.random.normal(1.0, 0.35))
             rb_game_script_factor = 1.2 if is_blowout else 0.9 if is_shootout else 1.0
 
             for p in players:
                 base_proj = p.get("projection", 10.0)
-                std = p.get("std", base_proj * 0.4)  # typical std ~40% of mean for NFL
+                std = p.get("std", base_proj * 0.4)
                 pos = p.get("position", "WR")
+                team = p.get("team", home)
+                team_qb_factor = home_qb_factor if team == home else away_qb_factor
 
-                # Correlation adjustments
                 if pos == "QB":
-                    fp = max(0, np.random.normal(base_proj * qb_boom_factor, std * 0.7))
+                    fp = max(0, np.random.normal(base_proj * team_qb_factor, std * 0.7))
                 elif pos in ("WR", "TE"):
-                    # WR correlated to QB of same team
-                    # Find QB of same team in this game to correlate
-                    team_qb_factor = qb_boom_factor if p.get("team") == home else np.random.normal(1.0, 0.35)
-                    # Add some independent variance
                     fp = max(0, np.random.normal(base_proj * (0.6 + 0.4 * team_qb_factor), std))
                 elif pos == "RB":
-                    # RB negatively correlated with QB boom when leading, positively when trailing? Simplified
                     fp = max(0, np.random.normal(base_proj * rb_game_script_factor, std))
                 else:
                     fp = max(0, np.random.normal(base_proj, std))
@@ -164,7 +143,7 @@ class Simulator:
                     team=p.get("team", home),
                     position=pos,
                     fantasy_points=fp,
-                    stats={"base": base_proj, "boom_factor": qb_boom_factor if pos=="QB" else 1.0},
+                    stats={"base": base_proj, "boom_factor": team_qb_factor if pos == "QB" else 1.0},
                     game_id=game_id,
                     sim_index=sim_idx
                 ))
@@ -229,7 +208,7 @@ class Simulator:
         return scripts
 
     def _simulate_mlb_game(self, game_id, home, away, players, vegas_total):
-        """MLB: pitcher dominance, stack correlation, park factors."""
+        """Schematic MLB draw. No park factors and no live rates."""
         scripts = []
         for sim_idx in range(self.n_sims):
             # MLB totals typically 7-11 runs
@@ -253,11 +232,8 @@ class Simulator:
                 team = p.get("team", home)
 
                 if pos == "P":
-                    # Pitcher: normally distributed (bell curve per SaberSim video)
                     fp = max(0, np.random.normal(base * pitcher_dominance, std * 0.5))
                 else:
-                    # Hitter: extreme downside, most common outcome 0 (per SaberSim MLB video)
-                    # Model as mixture: 60% chance 0-5 pts, 40% chance boom
                     stack_factor = home_stack_factor if team == home else away_stack_factor
                     if team == home:
                         # If pitcher dominant for away, suppress home? Actually pitcher_dominance suppresses opposite
