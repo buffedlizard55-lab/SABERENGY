@@ -76,8 +76,10 @@ Clean, user-friendly site in `docs/index.html`:
 - Data-quality official sources with link-check status
 - Limitations, irregularities, and roadmap
 
-Enable Pages: Settings → Pages → Source: Deploy from branch → Branch: `main` → Folder: `/docs`
-Live URL: https://buffedlizard55-lab.github.io/SABERENGY/
+Enable/verify Pages: Settings → Pages → Source: Deploy from branch → Branch: `main`.
+**Actual live config (checked 2026-09-22):** folder `/` (branch root) with root `index.html` performing a redirect to `docs/` — because the repo token gets HTTP 403 when changing Pages settings. Equivalent alternative if you have UI access: set folder to `/docs` and the site serves directly at the root URL.
+
+Live URL: https://buffedlizard55-lab.github.io/SABERENGY/ (verified 2026-09-22 — redirects and serves `docs/index.html`)
 
 ## Verification Checklist — No Hallucinations
 
