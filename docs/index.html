@@ -128,7 +128,7 @@ footer{padding:48px 0;color:var(--dim);font-size:12px}
 <tr><td><strong>Core Method</strong></td><td>Play-by-play game simulation feeding lineup builder; thousands of game scripts, correlations emerge naturally</td><td><a href="https://support.sabersim.com/en/articles/12078831-how-projections-work" target="_blank">Support #12078831</a><br><a href="https://www.stokastic.com/articles/nfl-dfs/stokastic-sims-vs-sabersim-vs-rotogrinders-nfl-2026" target="_blank">Stokastic Comparison 2026</a></td><td><span class="pill">✓ Implemented</span> <code>simulation.py</code></td></tr>
 <tr><td><strong>Point Projections</strong></td><td>Point projections don't come from averages — they come from thousands of play-by-play simulations; projection you see is mean across sims</td><td><a href="https://support.sabersim.com/en/articles/12078831-how-projections-work" target="_blank">Support #12078831</a></td><td><span class="pill">✓ Implemented</span></td></tr>
 <tr><td><strong>Percentiles / Range</strong></td><td>Floor = 10th-25th percentile, Median = 50th percentile, Ceiling upper percentiles</td><td><a href="https://support.sabersim.com/en/articles/12078831-how-projections-work" target="_blank">Support #12078831</a></td><td><span class="pill">✓ Implemented</span></td></tr>
-<tr><td><strong>Ownership</strong></td><td>Contest-specific, Field-based (field lineups), Dynamic — updates within minutes of breaking news</td><td><a href="https://support.sabersim.com/en/articles/12078831-how-projections-work" target="_blank">Support #12078831</a></td><td><span class="pill">✓ Implemented</span> <code>ownership.py</code></td></tr>
+<tr><td><strong>Ownership</strong></td><td>Contest-specific (65% vs 41% example), Field-based (field lineups), Dynamic — updates usually within minutes of breaking news</td><td><a href="https://support.sabersim.com/en/articles/12078831-how-projections-work" target="_blank">Support #12078831</a></td><td><span class="pill">✓ Implemented</span> <code>ownership.py</code></td></tr>
 <tr><td><strong>Live Flagship Ownership</strong></td><td>See actual ownership in flagship contests in real time</td><td><a href="https://www.sabersim.com/pricing" target="_blank">/pricing</a></td><td><span class="pill">✓ Mock via DK CSV</span></td></tr>
 <tr><td><strong>Adjusted Ownership / SaberScore</strong></td><td>Identifies over/under-owned players relative to ceiling outcomes, feeds into SaberScore as negative variable</td><td><a href="https://support.sabersim.com/en/articles/12078831-how-projections-work" target="_blank">Support #12078831</a></td><td><span class="pill">✓ Implemented</span></td></tr>
 <tr><td><strong>Contest Sims</strong></td><td>Recreate contests using real game outcomes, realistic opponent lineups, exact payout structures; 100k sims in 30s</td><td><a href="https://support.sabersim.com/en/articles/12079199-how-contest-sims-work" target="_blank">Support #12079199</a></td><td><span class="pill">✓ Implemented</span> <code>contest_sim.py</code></td></tr>
@@ -137,9 +137,9 @@ footer{padding:48px 0;color:var(--dim);font-size:12px}
 <tr><td><strong>Optimizer Mode</strong></td><td>Traditional optimizer mode using static projections only, useful for cash games</td><td><a href="https://support.sabersim.com/en/articles/12079141-building-lineups" target="_blank">Support #12079141</a></td><td><span class="pill">✓ Implemented</span></td></tr>
 <tr><td><strong>Correlation Slider</strong></td><td>Controls how strongly correlated plays are prioritized. Higher = more natural stacks</td><td><a href="https://support.sabersim.com/en/articles/12079141-building-lineups-in-sabersim" target="_blank">Building Lineups (new)</a></td><td><span class="pill">✓ Implemented</span></td></tr>
 <tr><td><strong>Sim Diversity Slider</strong></td><td>Controls how many different simulations are used. Higher = more variety</td><td><a href="https://support.sabersim.com/en/articles/12079141-building-lineups-in-sabersim" target="_blank">Building Lineups</a></td><td><span class="pill">✓ Implemented</span></td></tr>
-<tr><td><strong>Ownership Fade Slider</strong></td><td>Controls how much ownership is a factor; high variance highly owned players faded more aggressively</td><td><a href="https://www.sabersim.com/video/dfs-lineup-optimizers-are-obsolete-you-need-a-simulator" target="_blank">Video: Optimizers Obsolete</a></td><td><span class="pill">✓ Implemented</span></td></tr>
-<tr><td><strong>Late Swap</strong></td><td>Automatic resims when news breaks, notifications, Quick Swap red lightning bolt, Games Panel</td><td><a href="https://support.sabersim.com/en/articles/12079563-using-late-swap" target="_blank">Support #12079563</a></td><td><span class="pill">✓ Designed</span> API polling loop</td></tr>
-<tr><td><strong>Contest Flashback</strong></td><td>Collects all real lineups after DK contest completes, re-simulation 100k times, Sim ROI measurement</td><td><a href="https://support.sabersim.com/en/articles/12079605-using-contest-flashback" target="_blank">Support #12079605</a></td><td><span class="pill">✓ Implemented</span></td></tr>
+<tr><td><strong>Ownership Fade Slider</strong></td><td>Controls how much ownership is a factor; high variance highly owned players faded more aggressively</td><td><a href="https://www.sabersim.com/video/dfs-lineup-optimizers-are-obsolete-you-need-a-simulator" target="_blank">Video: Optimizers Obsolete</a> <span class="tag">⚠ video — transcript not text-verifiable</span></td><td><span class="pill">✓ Implemented</span></td></tr>
+<tr><td><strong>Late Swap</strong></td><td>Automatic resims when news breaks, notifications (browser/mobile), Quick Swap red lightning bolt, Games Panel, Delta Exposure</td><td><a href="https://support.sabersim.com/en/articles/12079563-using-late-swap" target="_blank">Support #12079563</a></td><td><span class="pill">✓ Designed</span> API polling loop</td></tr>
+<tr><td><strong>Contest Flashback</strong></td><td>DraftKings slates only; collects all real lineups after contest, re-simulation 100,000 times; Sim ROI / Median Profit / 99th Profit / Avg Dupes</td><td><a href="https://support.sabersim.com/en/articles/12079605-using-contest-flashback" target="_blank">Support #12079605</a></td><td><span class="pill">✓ Implemented</span></td></tr>
 <tr><td><strong>Custom Projections / CSV</strong></td><td>Upload multiple projection sources, aggregate weighted average, download projection CSV</td><td><a href="https://www.sabersim.com/pricing" target="_blank">/pricing</a></td><td><span class="pill">✓ Implemented</span></td></tr>
 <tr><td><strong>ROI Metrics</strong></td><td>ROI, Cash Rate, Win Rate, ROI Standard Deviation</td><td><a href="https://www.sabersim.com/pricing" target="_blank">/pricing</a></td><td><span class="pill">✓ Implemented</span></td></tr>
 </tbody>
@@ -154,18 +154,18 @@ footer{padding:48px 0;color:var(--dim);font-size:12px}
 <section id="sports">
 <div class="section-head">
 <h2>2. Sports & DFS Sites Supported</h2>
-<p>Reverse engineered from homepage marquee and pricing page — line by line.</p>
+<p>Reverse engineered from the homepage "18 sports. 4 sites. 1 platform." section and pricing page — line by line (verified 2026-09-22).</p>
 </div>
 <div class="grid grid-2">
 <div class="card">
-<h3>18 Sports (per homepage) <span class="tag">verified 2023-08-22</span></h3>
-<p>NFL, NBA, MLB, NHL, MMA, PGA, SOCCER*, TENNIS, NASCAR, LOL, CSGO, CFB, CBB*, F1, UFL, COD*, CFL*, WNBA</p>
-<div class="source">Source: <a href="https://www.sabersim.com/" target="_blank">https://www.sabersim.com/</a> — homepage marquee lists 18 sports icons + labels; asterisk indicates limited slates.</div>
+<h3>18 Sports (per homepage) <span class="tag">verified 2026-09-22</span></h3>
+<p>NFL, NBA, MLB, NHL, MMA, PGA, SOCCER*, TENNIS, NASCAR, LOL, CSGO, CFB, CBB*, F1, UFL, COD*, CFL*, WNBA (*Optimizer only, per homepage note)</p>
+<div class="source">Source: <a href="https://www.sabersim.com/" target="_blank">https://www.sabersim.com/</a> — homepage section <strong>"18 sports. 4 sites. 1 platform."</strong> lists these 18 labels verbatim (fetched 2026-09-22).</div>
 </div>
 <div class="card">
 <h3>4 DFS Sites</h3>
 <p>DraftKings, FanDuel, Yahoo! Sports, OwnersBox</p>
-<div class="source">Source: <a href="https://www.sabersim.com/" target="_blank">sabersim.com homepage</a> — "4 sites. 1 platform."</div>
+<div class="source">Source: <a href="https://www.sabersim.com/" target="_blank">sabersim.com homepage</a> — section "18 sports. 4 sites. 1 platform." with four site logos (verified 2026-09-22).</div>
 </div>
 </div>
 <div class="card" style="margin-top:16px">
@@ -227,8 +227,8 @@ footer{padding:48px 0;color:var(--dim);font-size:12px}
 
 <div class="card" style="margin-top:16px">
 <h3>Ownership Projections — Field-Based</h3>
-<p>Ownership is descriptive statistic of field lineups — large sets of simulated lineups representing how field builds for each contest type. Contest-specific (65% in high-stakes single-entry vs 41% in large-field MME), dynamic (updates within minutes of news).</p>
-<div class="source">Sources: <a href="https://support.sabersim.com/en/articles/12078831-how-projections-work" target="_blank">How Projections Work</a> + <a href="https://support.sabersim.com/en/articles/12079199-how-contest-sims-work" target="_blank">How Contest Sims Work</a></div>
+<p>Ownership is descriptive statistic of field lineups — large sets of simulated lineups representing how field builds for each contest type. Contest-specific (65% in high-stakes single-entry vs 41% in large-field MME), dynamic (updates <em>usually</em> within minutes of news).</p>
+<div class="source">Sources: <a href="https://support.sabersim.com/en/articles/12078831-how-projections-work" target="_blank">How Projections Work</a> + <a href="https://support.sabersim.com/en/articles/12079199-how-contest-sims-work" target="_blank">How Contest Sims Work</a> (field lineups power Contest Sims; Ultimate plan and above)</div>
 </div>
 </section>
 
@@ -242,10 +242,11 @@ footer{padding:48px 0;color:var(--dim);font-size:12px}
 <p>Contest Sims recreate DFS contests from top to bottom. Every lineup judged using: real game outcomes from play-by-play sims, realistic opponent lineups based on contest type and field tendencies, exact payout structures from contests entered. Automatically configured for each contest, tailored to payout structure, size, entry limits. Assigns realistic opponent fields using ownership projections for 13 contest types. Builds multiple sets of opponent lineups using industry-aggregated projections.</p>
 <div class="source">Source: <a href="https://support.sabersim.com/en/articles/12079199-how-contest-sims-work" target="_blank">https://support.sabersim.com/en/articles/12079199-how-contest-sims-work</a></div>
 <div class="grid grid-3" style="margin-top:16px">
-<div class="kpi"><div class="num">100k</div><div class="label">Simulations per contest evaluation</div></div>
-<div class="kpi"><div class="num">30s</div><div class="label">Time to sim pool against representative contest</div></div>
-<div class="kpi"><div class="num">ROI / Cash / Win / StdDev</div><div class="label">Full metrics suite</div></div>
+<div class="kpi"><div class="num">100k</div><div class="label">Simulations per contest evaluation (pricing page: 100k in 30s or less)</div></div>
+<div class="kpi"><div class="num">4 stake buckets</div><div class="label">Low ≤$4 · Flagship $4.01–$30 · Med $30.01–$99.99 · High ≥$100 (verified in article)</div></div>
+<div class="kpi"><div class="num">8 metrics</div><div class="label">ROI · Median ROI · Max ROI · Min ROI · Win Rate · Cash Rate · ROI StDev · Dupes</div></div>
 </div>
+<div class="source" style="margin-top:10px">Sources: <a href="https://support.sabersim.com/en/articles/12079199-how-contest-sims-work" target="_blank">How Contest Sims Work</a> (buckets + metrics) + <a href="https://www.sabersim.com/pricing" target="_blank">/pricing</a> (100k/30s + headline ROI suite). Also verified in article: "Use Live Field" for live DK opponent lineups during late swap (DraftKings only).</div>
 </div>
 </section>
 
@@ -295,7 +296,7 @@ footer{padding:48px 0;color:var(--dim);font-size:12px}
 <ul class="check">
 <li><strong>Truth 1:</strong> You're betting on games, not spreadsheets — player outcomes not independent, but interconnected story. QB success tied to receivers, RB production comes at expense of passing when leading late.</li>
 <li><strong>Truth 2:</strong> You're betting against other people — raw points only matter vs field. Contrarian 135pt lineup can be more valuable than chalk 140pt because it has paths to top when field fails.</li>
-<li><strong>Leverage:</strong> Fade bad chalk (high owned, low ceiling), get over field on low-owned upside with similar ceiling. Leverage = Sim Win Rate minus Projected Ownership.</li>
+<li><strong>Leverage:</strong> SaberSim's official definition is qualitative: "Leverage: lineups that look different from the field" (<a href="https://support.sabersim.com/en/articles/12079141-building-lineups" target="_blank">Building Lineups</a>). The formula <em>Leverage = Sim Win Rate − Projected Ownership</em> comes from a <strong>third-party</strong> source (<a href="https://onlydfs.com/blog/best-mlb-dfs-optimizer-tools-2026.html" target="_blank">onlydfs.com</a>, affiliate blog — flagged), not from SaberSim docs. We implement it as a proxy.</li>
 <li><strong>Stacking:</strong> MLB 4-5 man stack booms/busts together, NFL QB+WR+bring-back, NBA correlation via game pace. Don't force — let emerge from sims.</li>
 </ul>
 <div class="source">Sources: <a href="https://support.sabersim.com/en/articles/12078831-how-projections-work" target="_blank">How Projections Work</a> + <a href="https://www.sabersim.com/video/how-to-beat-mlb-dfs" target="_blank">How to Beat MLB DFS video</a></div>
@@ -313,7 +314,7 @@ footer{padding:48px 0;color:var(--dim);font-size:12px}
 │   ├── GameScript        # Single simulation outcome
 │   ├── PlayerOutcome     # Distribution across sims
 │   └── CorrelationMatrix # QB-WR, team stack correlation from co-occurrence in sims
-├── projections.py       # Point projections = mean across sims, percentiles (10th,25th,50th,85th,95th), detailed stats
+├── projections.py       # Point projections = mean across sims, percentiles (10th,25th,50th,75th,85th,90th,95th), detailed stats
 ├── ownership.py         # Field lineup generator, contest-specific ownership, dynamic updates
 │   ├── FieldLineups      # Simulated opponent lineups per contest type (13 types)
 │   └── AdjustedOwnership  # Over/under-owned vs ceiling
@@ -350,14 +351,14 @@ GitHub Pages: /docs/index.html — this page, clean UI, no hallucinations
 <table>
 <thead><tr><th>Sport</th><th>Official Source</th><th>What It Provides</th><th>Verified Link</th><th>Used In</th></tr></thead>
 <tbody>
-<tr><td>MLB</td><td>MLB Stats API (MLBAM)</td><td>Schedule, live game state, box scores, play-by-play, players, teams, standings, venues, stat splits</td><td><a href="https://statsapi.mlb.com/" target="_blank">statsapi.mlb.com</a> — docs at <a href="https://docs.statsapi.mlb.com/" target="_blank">docs.statsapi.mlb.com</a></td><td>simulation.py, projections.py</td></tr>
-<tr><td>NBA</td><td>NBA Stats (stats.nba.com) via nba_api Python package</td><td>Player/team stats, box scores, shot charts, hustle, tracking, play-by-play — same endpoints powering NBA.com</td><td><a href="https://github.com/swar/nba_api" target="_blank">github.com/swar/nba_api</a> (3.8k stars) + <a href="https://www.nba.com/stats" target="_blank">nba.com/stats</a></td><td>simulation.py</td></tr>
+<tr><td>MLB</td><td>MLB Stats API (MLBAM)</td><td>Schedule, live game state, box scores, play-by-play, players, teams, standings, venues, stat splits — public JSON, no key</td><td><a href="https://statsapi.mlb.com/api/v1/sports" target="_blank">statsapi.mlb.com/api/v1/sports</a> (works, checked 2026-09-22) · ⚠ <a href="https://statsapi.mlb.com/" target="_blank">root</a> + <a href="https://docs.statsapi.mlb.com/" target="_blank">docs</a> now show Okta login wall</td><td>simulation.py, projections.py</td></tr>
+<tr><td>NBA</td><td>NBA Stats (stats.nba.com) via nba_api Python package</td><td>Player/team stats, box scores, shot charts, hustle, tracking, play-by-play — endpoints powering NBA.com</td><td><a href="https://github.com/swar/nba_api" target="_blank">github.com/swar/nba_api</a> (HTTP 200, checked 2026-09-22) + <a href="https://www.nba.com/stats" target="_blank">nba.com/stats</a></td><td>simulation.py</td></tr>
 <tr><td>NFL</td><td>NFL Official via SportRadar + nflverse (open)</td><td>Live scores, drives, play-by-play with EPA/WPA, depth charts, injuries, weather — SportRadar official; nflverse free historical</td><td><a href="https://developer.sportradar.com/football/reference/nfl-play-by-play" target="_blank">SportRadar NFL PBP</a> + <a href="https://github.com/nflverse/nflverse-data" target="_blank">nflverse</a></td><td>simulation.py</td></tr>
-<tr><td>NHL</td><td>NHL Official API (api-web.nhle.com)</td><td>Teams, schedules, standings, rosters, player stats</td><td><a href="https://gitlab.com/dword4/nhlapi/-/blob/master/stats-api.md" target="_blank">NHL API docs (community)</a></td><td>simulation.py</td></tr>
-<tr><td>PGA</td><td>PGA Tour ShotLink (via Data Golf / official)</td><td>Course fit, strokes gained, player consistency</td><td><a href="https://www.pgatour.com/stats" target="_blank">pgatour.com/stats</a></td><td>projections.py</td></tr>
-<tr><td>DFS Contests</td><td>DraftKings CSV export (public after contest) + FanDuel Leaders scrape</td><td>Real ownership, payout structures, field lineup reconstruction for Flashback</td><td><a href="https://rotogrinders.com/resultsdb/nfl" target="_blank">RotoGrinders ResultsDB</a> explains DK CSV; <a href="https://www.reddit.com/r/dfsports/comments/1741d6h/is_there_anywhere_to_find_ownership_results/" target="_blank">Reddit: DK CSV source</a></td><td>contest_sim.py, flashback</td></tr>
+<tr><td>NHL</td><td>NHL Official API (api-web.nhle.com)</td><td>Teams, schedules, standings, rosters, player stats, live game data — no key</td><td><a href="https://api-web.nhle.com/v1/standings/now" target="_blank">api-web.nhle.com/v1/standings/now</a> (works · ⚠ bare root 404s) · community/legacy docs: <a href="https://gitlab.com/dword4/nhlapi/-/blob/master/stats-api.md" target="_blank">gitlab dword4/nhlapi</a></td><td>simulation.py</td></tr>
+<tr><td>PGA</td><td>PGA Tour official stats (ShotLink-powered)</td><td>Strokes gained, scoring, course stats</td><td><a href="https://www.pgatour.com/stats" target="_blank">pgatour.com/stats</a> (verified 2026-09-22)</td><td>projections.py</td></tr>
+<tr><td>DFS Contests</td><td>DraftKings post-contest CSV (entries + ownership)</td><td>Real ownership, payout structures, field lineup reconstruction for Flashback</td><td><a href="https://www.reddit.com/r/dfsports/comments/1741d6h/is_there_anywhere_to_find_ownership_results/" target="_blank">Reddit thread on DK CSV</a> ⚠ 403 to bots — verify in browser. ⚠ rotogrinders.com/resultsdb/nfl now redirects to a sales page (citation removed).</td><td>contest_sim.py, flashback</td></tr>
 <tr><td>Weather / Park</td><td>OpenWeather + Ballpark Pal</td><td>Wind, temp, humidity, park factors for MLB, NFL weather adjustments</td><td><a href="https://openweathermap.org/api" target="_blank">openweathermap.org/api</a></td><td>simulation.py</td></tr>
-<tr><td>Vegas Lines</td><td>Pinnacle / DraftKings Sportsbook API (public odds)</td><td>Implied totals, spreads — used to calibrate game scripts to market</td><td><a href="https://www.sportsbook.draftkings.com/" target="_blank">DraftKings Sportsbook</a></td><td>simulation.py</td></tr>
+<tr><td>Vegas Lines</td><td>Sportsbook odds pages (implied totals/spreads)</td><td>Implied totals, spreads — used to calibrate game scripts to market (manual/odds-feed ingestion; no official free API claimed)</td><td><a href="https://www.sportsbook.draftkings.com/" target="_blank">DraftKings Sportsbook</a> ⚠ automated fetch failed (bot protection) 2026-09-22 — verify manually</td><td>simulation.py</td></tr>
 </tbody>
 </table>
 </div>
@@ -390,6 +391,7 @@ GitHub Pages: /docs/index.html — this page, clean UI, no hallucinations
 cd SABERENGY
 pip install -r requirements.txt
 python -m saberengy.demo --sport NFL --slate main --n-sims 1000
+# run from repo root with PYTHONPATH=src, e.g.: PYTHONPATH=src python -m saberengy.demo ...
 # Outputs: projections.csv, ownership.csv, lineups.csv, contest_sim.json</pre>
 </div>
 <div class="card">
@@ -415,13 +417,15 @@ python -m saberengy.demo --sport NFL --slate main --n-sims 1000
 <div class="alert warn">
 <strong>⚠ Flags — Requires Manual Review / Future Work</strong>
 <ul style="margin-top:8px; padding-left:16px">
-<li><strong>Proprietary coaching tendency model:</strong> SaberSim says they model strategy, coaching decisions, game flow — exact weights proprietary. We approximate with nflverse EPA + historical play-call rates. Gap: ~5-10% accuracy vs their calibrated model. Needs ML training on 5 years PBP.</li>
-<li><strong>Field lineup industry-aggregated projections:</strong> SaberSim builds opponent fields using industry-aggregated projections that reflect actual construction trends — we don't have their private aggregate. We approximate with public projections (RotoGrinders, NumberFire). Flag: ownership may be off 2-5% for low-owned punts.</li>
+<li><strong>Proprietary coaching tendency model:</strong> SaberSim says each sim includes strategy, play-calling, coaching decisions, and game flow — exact weights are proprietary. We approximate with nflverse EPA + historical play-call rates. <strong>Accuracy gap: unquantified</strong> (an earlier "~5–10%" figure was unsourced and removed). Needs ML training on years of PBP + held-out validation.</li>
+<li><strong>Field lineup industry-aggregated projections:</strong> SaberSim builds opponent fields using private industry-aggregated projections. We approximate with our own sim projections (we do <em>not</em> scrape RotoGrinders/NumberFire). Flag: ownership error magnitude is <strong>unmeasured</strong> — calibrate vs post-contest DK CSV ownership (MAE study in roadmap).</li>
 <li><strong>Live ownership in flagship contests real-time:</strong> SaberSim shows actual ownership in flagship contests in real time (requires insider DK data or large sample of user lineups). We can only approximate until contest CSV released post-lock. Limitation: cannot provide true live pre-lock flagship ownership without partnership.</li>
 <li><strong>13 contest types auto-updating:</strong> We have list of 13 types verbatim from pricing page, but exact heuristics per type (how field behaves in High Stakes SE vs Low Stakes MME) is proprietary. We implement reasonable heuristics; needs validation vs real contest results.</li>
 <li><strong>SaberScore formula:</strong> Exact SaberScore calculation proprietary — we know adjusted ownership feeds as negative variable penalizing over-owned, boosting under-owned with upside. We implement proxy: SaberScore = projection * (ceiling/mean) * (1 + leverage) where leverage = sim_win_rate - ownership.</li>
 <li><strong>Sport-specific nuances:</strong> PGA course fit, MMA matchup models, NASCAR lap leaders, LOL/CSGO economy — each sport needs dedicated model. Current implementation covers NFL/NBA/MLB fully, others stubbed.</li>
-<li><strong>No hallucination guarantee:</strong> All above flags are honest gaps, not hallucinations. Each flagged item has source link showing what is proprietary.</li>
+<li><strong>Irregularities observed on SaberSim's own site (2026-09-22):</strong> (1) pricing page Pro/Ultimate tooltips contain "Lorem ipsum" placeholder copy; (2) pricing optimizer list says "USFL" while homepage/projections say "UFL"; (3) statsapi.mlb.com root + docs show login walls while API paths stay public; (4) api-web.nhle.com root 404s (use /v1/... paths); (5) rotogrinders.com/resultsdb/nfl redirects to a sales page; (6) video-transcript quotes cannot be machine-verified from page HTML.</li>
+<li><strong>Unsourced estimates removed:</strong> earlier "~5–10%" / "2–5%" accuracy-gap figures had no source and were removed/relabelled as unquantified.</li>
+<li><strong>No hallucination guarantee:</strong> All above flags are honest gaps, not hallucinations. Each flagged item has a source link showing what is public vs proprietary.</li>
 </ul>
 </div>
 </section>
@@ -446,7 +450,7 @@ python -m saberengy.demo --sport NFL --slate main --n-sims 1000
 <h3>Next Session (P1)</h3>
 <ul class="check">
 <li>Implement 13 contest type heuristics validation vs real contests</li>
-<li>PGA course fit model using ShotLink + Data Golf free tier</li>
+<li>PGA course fit model using official PGA Tour stats (<a href="https://www.pgatour.com/stats" target="_blank">pgatour.com/stats</a>)</li>
 <li>Front-end optimizer UI — React app that calls Python backend via API</li>
 <li>Backtesting framework: sim ROI vs actual ROI over 100 slates</li>
 <li>Deploy GitHub Pages with custom domain + Jekyll (currently static HTML in /docs)</li>
@@ -483,12 +487,18 @@ python -m saberengy.demo --sport NFL --slate main --n-sims 1000
 <tr><td>9</td><td>Contest Flashback = collect real lineups, 100k re-sim, Sim ROI</td><td><a href="https://support.sabersim.com/en/articles/12079605-using-contest-flashback" target="_blank">Support #12079605</a></td><td>✓ Verified</td></tr>
 <tr><td>10</td><td>Pricing: $97 Starter 500, $197 Pro 5000, $297 Ultimate 5000 + contest sims</td><td><a href="https://www.sabersim.com/pricing" target="_blank">sabersim.com/pricing</a></td><td>✓ Verified</td></tr>
 <tr><td>11</td><td>13 contest types list verbatim</td><td><a href="https://www.sabersim.com/pricing" target="_blank">Same pricing page</a></td><td>✓ Verified</td></tr>
-<tr><td>12</td><td>18 sports + 4 sites (DK, FD, Yahoo, OwnersBox)</td><td><a href="https://www.sabersim.com/" target="_blank">sabersim.com homepage</a></td><td>✓ Verified</td></tr>
+<tr><td>12</td><td>"18 sports. 4 sites. 1 platform." section — 18 sport labels (4 with *optimizer only) + DK/FD/Yahoo/OwnersBox</td><td><a href="https://www.sabersim.com/" target="_blank">sabersim.com homepage</a> (final content section, not the testimonial marquee)</td><td>✓ Verified verbatim</td></tr>
 <tr><td>13</td><td>Core method = play-by-play game sim feeding builder vs contest sim</td><td><a href="https://www.stokastic.com/articles/nfl-dfs/stokastic-sims-vs-sabersim-vs-rotogrinders-nfl-2026" target="_blank">Stokastic comparison</a></td><td>✓ Verified (third-party)</td></tr>
 <tr><td>14</td><td>MLB Stats API official source</td><td><a href="https://statsapi.mlb.com/" target="_blank">statsapi.mlb.com</a> + <a href="https://docs.statsapi.mlb.com/" target="_blank">docs.statsapi.mlb.com</a></td><td>✓ Official</td></tr>
 <tr><td>15</td><td>NBA stats.nba.com via nba_api</td><td><a href="https://github.com/swar/nba_api" target="_blank">github.com/swar/nba_api</a></td><td>✓ Official wrapper</td></tr>
 <tr><td>16</td><td>NFL PBP via SportRadar official + nflverse open</td><td><a href="https://developer.sportradar.com/football/reference/nfl-play-by-play" target="_blank">SportRadar</a> + <a href="https://github.com/nflverse/nflverse-data" target="_blank">nflverse</a></td><td>✓ Official / Open</td></tr>
-<tr><td>17</td><td>DK CSV ownership source</td><td><a href="https://www.reddit.com/r/dfsports/comments/1741d6h/is_there_anywhere_to_find_ownership_results/" target="_blank">Reddit r/dfsports</a> + <a href="https://rotogrinders.com/resultsdb/nfl" target="_blank">RotoGrinders ResultsDB</a></td><td>✓ Community verified</td></tr>
+<tr><td>17</td><td>DK CSV ownership source (community guidance)</td><td><a href="https://www.reddit.com/r/dfsports/comments/1741d6h/is_there_anywhere_to_find_ownership_results/" target="_blank">Reddit r/dfsports</a> ⚠ 403 to bots (browser check needed). RotoGrinders ResultsDB citation removed — URL now redirects to a sales page.</td><td>⚠ Partially verified — flag kept</td></tr>
+<tr><td>18</td><td>Stakes buckets: Low ≤$4 · Flagship $4.01–$30 · Med $30.01–$99.99 · High ≥$100</td><td><a href="https://support.sabersim.com/en/articles/12079199-how-contest-sims-work" target="_blank">How Contest Sims Work</a></td><td>✓ Verified verbatim</td></tr>
+<tr><td>19</td><td>Homepage sim tagline: "THEY PROJECT PLAYERS, WE SIMULATE GAMES ... simulates every game thousands of times, play-by-play"</td><td><a href="https://www.sabersim.com/" target="_blank">sabersim.com homepage</a></td><td>✓ Verified verbatim</td></tr>
+<tr><td>20</td><td>MLB API endpoint returns public JSON (no key); root/docs show login wall</td><td><a href="https://statsapi.mlb.com/api/v1/sports" target="_blank">statsapi.mlb.com/api/v1/sports</a></td><td>✓ Verified working</td></tr>
+<tr><td>21</td><td>Contest sim metrics: ROI, Median/Max/Min ROI, Win Rate, Cash Rate, ROI StDev, Dupes</td><td><a href="https://support.sabersim.com/en/articles/12079199-how-contest-sims-work" target="_blank">How Contest Sims Work</a></td><td>✓ Verified</td></tr>
+<tr><td>22</td><td>Leverage formula = sim win rate − ownership</td><td><a href="https://onlydfs.com/blog/best-mlb-dfs-optimizer-tools-2026.html" target="_blank">onlydfs.com</a></td><td>⚠ THIRD-PARTY (not SaberSim); proxy used</td></tr>
+<tr><td>23</td><td>Ownership Fade variance behavior</td><td><a href="https://www.sabersim.com/video/dfs-lineup-optimizers-are-obsolete-you-need-a-simulator" target="_blank">video page</a></td><td>⚠ Page exists; transcript not text-verifiable</td></tr>
 </tbody>
 </table>
 </div>

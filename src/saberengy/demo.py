@@ -103,7 +103,7 @@ def main():
     print(f"[3/5] Projections built: {len(projections)} players")
     # Save projections CSV (matches SaberSim feature)
     with open(os.path.join(args.output, "projections.csv"), "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["player_id", "player_name", "team", "position", "projection", "p10", "p25", "p50", "p75", "p90", "p95", "std"])
+        writer = csv.DictWriter(f, fieldnames=["player_id", "player_name", "team", "position", "projection", "p10", "p25", "p50", "p75", "p85", "p90", "p95", "std"])
         writer.writeheader()
         for row in proj_engine.to_csv_rows():
             writer.writerow(row)
@@ -140,12 +140,13 @@ def main():
     print(f"      Saved ownership.csv")
 
     # 5. Optimizer — Sim Mode
-    optimizer = SimOptimizer(salary_cap=50000, lineup_size=8, correlation_weight=0.7, sim_diversity=0.6, ownership_fade=0.5)
+    # lineup_size=9 matches DraftKings classic NFL roster size (9 players).
+    optimizer = SimOptimizer(salary_cap=50000, lineup_size=9, correlation_weight=0.7, sim_diversity=0.6, ownership_fade=0.5)
     lineups = optimizer.build(scripts, projections, ownership, num_lineups=args.n_lineups, correlation_matrix=corr_matrix)
     print(f"[5/5] Optimizer built {len(lineups)} lineups (Sim Mode)")
     with open(os.path.join(args.output, "lineups.csv"), "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow([f"player_{i+1}" for i in range(8)])
+        writer.writerow([f"player_{i+1}" for i in range(9)])
         for lineup in lineups:
             writer.writerow(lineup)
     print(f"      Saved lineups.csv")

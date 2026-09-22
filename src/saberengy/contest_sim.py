@@ -22,13 +22,21 @@ import random
 from .simulation import GameScript
 
 class ContestSimulator:
-    def __init__(self, payout_structure: List[float], num_sims: int = 100000, seed: int = 42):
+    def __init__(
+        self,
+        payout_structure: List[float],
+        num_sims: int = 100000,
+        seed: int = 42,
+        entry_fee: float = 10.0,
+    ):
         """
         payout_structure: list of payouts for each rank, e.g., [100000, 50000, 25000, ...] or top-heavy GPP structure.
-        num_sims: number of contest simulations — SaberSim uses 100k per docs.
+        num_sims: number of contest simulations — SaberSim pricing page claims 100k in <=30s.
+        entry_fee: fee per lineup, used for ROI calc (docs: contest sims track ROI per entry fee).
         """
         self.payout_structure = payout_structure
         self.num_sims = num_sims
+        self.entry_fee = entry_fee
         random.seed(seed)
         np.random.seed(seed)
 
@@ -84,9 +92,11 @@ class ContestSimulator:
         # For simplicity, assume payout_structure length = field size + my lineups, and cash = any payout >0
         # In real DFS, cash rate depends on payout structure.
 
-        entry_fee = 10.0  # assume $10 entry for ROI calc, or derive from payout structure
+        entry_fee = self.entry_fee  # per-entry fee for ROI calc (constructor param)
         # Estimate total prize pool as sum(payouts) — typical
         # If payout_structure not fully specified, assume top 20% paid
+        # FLAG (documented simplification): cash threshold = 80th percentile of
+        # sampled scores; actual DK cash lines come from the exact payout table.
 
         for sim_iter in range(self.num_sims):
             # Pick random slate outcome

@@ -2,13 +2,24 @@
 Official verified data sources for SABERENGY.
 
 Each source is an official league API or trusted public endpoint.
-Links verified:
-- MLB Stats API: https://statsapi.mlb.com/ + https://docs.statsapi.mlb.com/
-- NBA stats.nba.com via nba_api: https://github.com/swar/nba_api (3.8k stars, wrapper around official NBA.com endpoints)
-- NFL: SportRadar official https://developer.sportradar.com/football/reference/nfl-play-by-play + nflverse open https://github.com/nflverse/nflverse-data
-- NHL: api-web.nhle.com (official, community docs https://gitlab.com/dword4/nhlapi)
-- Weather: https://openweathermap.org/api
-- DK Contest CSV: public after contest, referenced via https://www.reddit.com/r/dfsports/comments/1741d6h/is_there_anywhere_to_find_ownership_results/
+Link checks performed 2026-09-22 (fetch_page/HTTP verification):
+- MLB Stats API: API endpoints (e.g. https://statsapi.mlb.com/api/v1/sports) are PUBLIC, no key.
+  NOTE/FLAG: the bare root https://statsapi.mlb.com/ and https://docs.statsapi.mlb.com/ now show
+  an Okta login wall; use /api/v1/... paths directly. Docs may require login.
+- NBA stats.nba.com via nba_api: https://github.com/swar/nba_api (HTTP 200) + https://www.nba.com/stats
+- NFL: SportRadar official docs verified:
+  https://developer.sportradar.com/football/reference/nfl-play-by-play (full docs load, API key required)
+  + nflverse open https://github.com/nflverse/nflverse-data (HTTP 200)
+- NHL: official API https://api-web.nhle.com/ — FLAG: bare root returns 404; use endpoint paths
+  (verified working: https://api-web.nhle.com/v1/standings/now). Community docs (legacy API):
+  https://gitlab.com/dword4/nhlapi/-/blob/master/stats-api.md (documents old statsapi.web.nhl.com).
+- PGA: https://www.pgatour.com/stats (verified, Strokes Gained etc.; page sponsored by ShotLink)
+- Weather: https://openweathermap.org/api (verified, API key required)
+- DK Contest CSV: post-contest ownership/entries CSV from DraftKings. Community discussion:
+  https://www.reddit.com/r/dfsports/comments/1741d6h/is_there_anywhere_to_find_ownership_results/
+  FLAG: Reddit returns HTTP 403 to automated fetchers — open in a browser to verify manually.
+  FLAG: https://rotogrinders.com/resultsdb/nfl now REDIRECTS to a RotoGrinders premium sales page —
+  do not cite it as a live results DB.
 
 No paywalled data scraped.
 """
@@ -56,10 +67,10 @@ OFFICIAL_SOURCES = [
     ),
     DataSource(
         sport="NHL",
-        name="NHL Official API",
-        official_url="https://api-web.nhle.com/",
-        docs_url="https://gitlab.com/dword4/nhlapi/-/blob/master/stats-api.md",
-        provides="Teams, schedules, standings, rosters, player stats",
+        name="NHL Official API (api-web.nhle.com)",
+        official_url="https://api-web.nhle.com/v1/standings/now",  # bare root 404s; use endpoint paths
+        docs_url="https://gitlab.com/dword4/nhlapi/-/blob/master/stats-api.md",  # community docs (legacy statsapi.web.nhl.com)
+        provides="Teams, schedules, standings, rosters, player stats, live game data",
         requires_key=False,
         verified=True,
     ),
@@ -76,7 +87,7 @@ OFFICIAL_SOURCES = [
         sport="DFS",
         name="DraftKings Contest Results CSV",
         official_url="https://www.draftkings.com/",
-        docs_url="https://rotogrinders.com/resultsdb/nfl",
+        docs_url="https://www.reddit.com/r/dfsports/comments/1741d6h/is_there_anywhere_to_find_ownership_results/",  # community thread; 403 to bots
         provides="Real ownership, payout structures, field lineup reconstruction for Flashback",
         requires_key=False,
         verified=True,
@@ -92,12 +103,12 @@ OFFICIAL_SOURCES = [
     ),
     DataSource(
         sport="Vegas",
-        name="DraftKings Sportsbook + Pinnacle",
+        name="DraftKings Sportsbook (odds pages)",
         official_url="https://sportsbook.draftkings.com/",
         docs_url="https://sportsbook.draftkings.com/",
-        provides="Implied totals, spreads — calibrate game scripts",
+        provides="Implied totals, spreads — calibrate game scripts (no official free API claimed; odds pages only)",
         requires_key=False,
-        verified=True,
+        verified=False,  # FLAG: automated fetch failed 2026-09-22 (bot protection) — verify manually
     ),
 ]
 
@@ -129,10 +140,11 @@ def get_verification_links() -> Dict[str, str]:
         "video_optimizers_obsolete": "https://www.sabersim.com/video/dfs-lineup-optimizers-are-obsolete-you-need-a-simulator",
         "video_beat_mlb": "https://www.sabersim.com/video/how-to-beat-mlb-dfs",
         "comparison_stokastic": "https://www.stokastic.com/articles/nfl-dfs/stokastic-sims-vs-sabersim-vs-rotogrinders-nfl-2026",
-        "mlb_stats_api": "https://statsapi.mlb.com/",
-        "mlb_docs": "https://docs.statsapi.mlb.com/",
+        "mlb_stats_api": "https://statsapi.mlb.com/api/v1/sports",  # public endpoint (bare root shows login wall)
+        "mlb_docs": "https://docs.statsapi.mlb.com/",  # FLAG: may require Okta login as of 2026-09-22
         "nba_api": "https://github.com/swar/nba_api",
         "nfl_sportradar": "https://developer.sportradar.com/football/reference/nfl-play-by-play",
         "nfl_nflverse": "https://github.com/nflverse/nflverse-data",
-        "dk_ownership_source": "https://www.reddit.com/r/dfsports/comments/1741d6h/is_there_anywhere_to_find_ownership_results/",
+        "nhl_api_example": "https://api-web.nhle.com/v1/standings/now",  # bare root 404s
+        "dk_ownership_source": "https://www.reddit.com/r/dfsports/comments/1741d6h/is_there_anywhere_to_find_ownership_results/",  # 403 to bots; verify in browser
     }
