@@ -6,7 +6,9 @@ Verified from:
   "How It Works: All lineups are collected. After a DraftKings contest completes, SaberSim takes all of the real lineups that were actually played in that contest. Re-simulation. These real lineups are run through 100,000 slate simulations using SaberSim’s play-by-play game engine. Performance measurement. Each lineup is tested against realistic outcomes across thousands of game scripts"
   "What is Sim ROI and how should I use it? Sim ROI is the primary metric for evaluating DFS play. It shows the average return you’d expect if the contest were played out 100,000 times"
 
-No hallucinations.
+This class does not download DraftKings contest files. The caller must supply
+lineups. The default 100,000 simulations is the count named on SaberSim's
+page, not a benchmark that this process finishes in 30 seconds.
 """
 
 from typing import List, Dict

@@ -1,14 +1,9 @@
-"""
-SABERENGY — Open Source SaberSim Reverse Engineering
-Verified against official SaberSim docs:
-- https://support.sabersim.com/en/articles/12078831-how-projections-work
-- https://support.sabersim.com/en/articles/12079199-how-contest-sims-work
-- https://support.sabersim.com/en/articles/12079141-building-lineups
-- https://www.sabersim.com/pricing
+"""Independent DFS research code. Not affiliated with SaberSim.
 
-No hallucinations — all logic derived from public docs.
+Public SaberSim pages describe their product. This package does not copy
+their weights, and it does not claim to have rebuilt the paywalled product.
 """
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 from .simulation import Simulator, GameScript, PlayerOutcome
 from .projections import ProjectionEngine
 from .ownership import OwnershipModel, FieldLineups

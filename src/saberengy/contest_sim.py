@@ -1,189 +1,155 @@
+"""Contest simulation against a payout table.
+
+Public description, not our formula claim:
+https://support.sabersim.com/en/articles/12079199-how-contest-sims-work
+
+Metrics implemented to match the names in that article:
+ROI, Median ROI, Max ROI, Min ROI, Win Rate, Cash Rate, ROI StDev, Dupes.
+
+Dupes here means the count of identical lineups in the supplied field.
+SaberSim does not publish the duplication equation. This is a count, not
+their number.
+
+Payouts are assigned by rank against the supplied payout list. If the field
+is larger than `max_field_per_sim`, a random subset is scored and the result
+is marked approximate. That is a speed limit, not the "100k in 30 seconds"
+claim on https://www.sabersim.com/pricing — we benchmark separately and do
+not assert that claim.
 """
-Contest Sims — recreating DFS contests.
 
-Verified from:
-- https://support.sabersim.com/en/articles/12079199-how-contest-sims-work
-  "Contest Sims recreate your DFS contests from top to bottom. Every lineup is judged using: Real game outcomes from SaberSim’s play-by-play simulations, Realistic opponent lineups based on contest type and field tendencies, Exact payout structures from the contests you entered."
-  "SaberSim automatically configures sims for each contest, tailored to its payout structure, size, and entry limits. It also assigns realistic opponent fields using ownership projections for 13 different contest types"
-  "What's Going on Under the Hood: Opponents don’t play the same way in a low-stakes 150-max as in a high-stakes single-entry, so SaberSim doesn’t model them the same. Instead, it builds multiple sets of opponent lineups using industry-aggregated projections that reflect actual construction and ownership trends"
-  "Inputs: Play-by-play simulations, Projected opponent fields, Exact payout structures"
+from __future__ import annotations
 
-- https://www.sabersim.com/pricing
-  "Sim each lineup in your pool against a representative contest 100k times in 30 seconds or less."
-  "Full suite of ROI, Cash Rate, Win Rate, and ROI Standard Deviation"
-
-No hallucinations — implements exactly as described.
-"""
-
-from typing import List, Dict, Tuple
-import numpy as np
-from collections import defaultdict
 import random
+from collections import defaultdict
+from typing import Dict, List, Sequence
+
+import numpy as np
+
 from .simulation import GameScript
+
 
 class ContestSimulator:
     def __init__(
         self,
         payout_structure: List[float],
-        num_sims: int = 100000,
+        num_sims: int = 1000,
         seed: int = 42,
         entry_fee: float = 10.0,
+        max_field_per_sim: int = 1500,
     ):
-        """
-        payout_structure: list of payouts for each rank, e.g., [100000, 50000, 25000, ...] or top-heavy GPP structure.
-        num_sims: number of contest simulations — SaberSim pricing page claims 100k in <=30s.
-        entry_fee: fee per lineup, used for ROI calc (docs: contest sims track ROI per entry fee).
-        """
-        self.payout_structure = payout_structure
-        self.num_sims = num_sims
-        self.entry_fee = entry_fee
+        if entry_fee <= 0:
+            raise ValueError("entry_fee must be positive")
+        self.payout_structure = list(payout_structure)
+        self.num_sims = int(num_sims)
+        self.entry_fee = float(entry_fee)
+        self.max_field_per_sim = int(max_field_per_sim)
+        self.seed = seed
         random.seed(seed)
         np.random.seed(seed)
 
     def simulate(
         self,
-        my_lineups: List[List[str]],  # my pool: list of lineups (each list of player_ids)
-        field_lineups: List[List[str]],  # opponent field lineups
-        game_scripts: List[GameScript],  # play-by-play sims
-        projections_lookup: Dict[str, Dict] = None,  # optional for salary etc
+        my_lineups: List[List[str]],
+        field_lineups: List[List[str]],
+        game_scripts: List[GameScript],
+        projections_lookup: Dict = None,
     ) -> Dict:
-        """
-        Simulates contest num_sims times.
-        Each sim:
-        - Picks a random game script (real game outcome from PBP sims)
-        - Scores my lineups + field lineups based on that script's player outcomes
-        - Ranks all lineups, assigns payouts
-        - Tracks ROI per my lineup
-
-        Returns dict with ROI, Cash Rate, Win Rate, ROI StdDev per lineup index.
-        Matches SaberSim "Full suite of ROI, Cash Rate, Win Rate, and ROI Standard Deviation"
-        """
-
-        # Pre-index game scripts by sim_index grouping? For simplicity, we treat each GameScript as one slate outcome.
-        # In reality, a slate comprises multiple games; each sim index across games forms a full slate script.
-        # We'll group by sim_index.
-
-        # Group scripts by sim_index
-        by_sim_index = defaultdict(list)
-        for gs in game_scripts:
-            by_sim_index[gs.sim_index].append(gs)
-
-        sim_indices = list(by_sim_index.keys())
-        if not sim_indices:
+        by_sim = defaultdict(dict)
+        for script in game_scripts:
+            bucket = by_sim[script.sim_index]
+            for outcome in script.player_outcomes:
+                bucket[outcome.player_id] = bucket.get(outcome.player_id, 0.0) + outcome.fantasy_points
+        sim_ids = list(by_sim)
+        if not sim_ids:
             raise ValueError("No game scripts provided")
+        if not my_lineups:
+            raise ValueError("No lineups provided")
 
-        # Precompute player points per sim_index
-        # sim_index -> player_id -> fantasy points
-        points_by_sim = {}
-        for sim_idx, scripts in by_sim_index.items():
-            pts = {}
-            for gs in scripts:
-                for outcome in gs.player_outcomes:
-                    pts[outcome.player_id] = pts.get(outcome.player_id, 0) + outcome.fantasy_points
-            points_by_sim[sim_idx] = pts
+        rng = np.random.default_rng(self.seed)
+        approximate_field = len(field_lineups) > self.max_field_per_sim
+        roi_rows = np.zeros((len(my_lineups), self.num_sims), dtype=float)
+        wins = np.zeros(len(my_lineups), dtype=int)
+        cashes = np.zeros(len(my_lineups), dtype=int)
+        dupes = [
+            sum(1 for field in field_lineups if field == lineup)
+            for lineup in my_lineups
+        ]
 
-        num_my = len(my_lineups)
-        # Track results per my lineup
-        roi_history = [[] for _ in range(num_my)]
-        wins = [0] * num_my
-        cashes = [0] * num_my
-
-        # Determine cash line (e.g., top 20% cash) and win line (1st place)
-        # For simplicity, assume payout_structure length = field size + my lineups, and cash = any payout >0
-        # In real DFS, cash rate depends on payout structure.
-
-        entry_fee = self.entry_fee  # per-entry fee for ROI calc (constructor param)
-        # Estimate total prize pool as sum(payouts) — typical
-        # If payout_structure not fully specified, assume top 20% paid
-        # FLAG (documented simplification): cash threshold = 80th percentile of
-        # sampled scores; actual DK cash lines come from the exact payout table.
-
-        for sim_iter in range(self.num_sims):
-            # Pick random slate outcome
-            sim_idx = random.choice(sim_indices)
-            player_points = points_by_sim[sim_idx]
-
-            # Score my lineups
-            my_scores = []
-            for lineup in my_lineups:
-                score = sum(player_points.get(pid, 0) for pid in lineup)
-                my_scores.append(score)
-
-            # Score field lineups (sample subset for speed if field large)
-            # For performance, sample e.g., 500 field lineups per sim if field is 10k
-            field_sample_size = min(1000, len(field_lineups))
-            field_sample = random.sample(field_lineups, field_sample_size) if len(field_lineups) > field_sample_size else field_lineups
-            field_scores = []
-            for lineup in field_sample:
-                score = sum(player_points.get(pid, 0) for pid in lineup)
-                field_scores.append(score)
-
-            # Combine and rank
-            all_scores = my_scores + field_scores
-            # Sort descending
-            sorted_scores = sorted(all_scores, reverse=True)
-
-            # Determine win threshold (top score)
-            top_score = sorted_scores[0] if sorted_scores else 0
-            # Cash threshold: e.g., top 20% of field — approximate as 80th percentile
-            cash_threshold = np.percentile(sorted_scores, 80) if len(sorted_scores) > 10 else sorted_scores[-1]
-
+        for sim_i in range(self.num_sims):
+            points = by_sim[int(rng.choice(sim_ids))]
+            my_scores = np.array([_score(lineup, points) for lineup in my_lineups], dtype=float)
+            if approximate_field:
+                idx = rng.choice(len(field_lineups), size=self.max_field_per_sim, replace=False)
+                field = [field_lineups[i] for i in idx]
+            else:
+                field = field_lineups
+            field_scores = np.array([_score(lineup, points) for lineup in field], dtype=float)
+            all_scores = np.concatenate([my_scores, field_scores]) if len(field_scores) else my_scores
+            order = np.argsort(-all_scores, kind="mergesort")
+            ranks = np.empty(len(all_scores), dtype=int)
+            ranks[order] = np.arange(1, len(all_scores) + 1)
             for i, score in enumerate(my_scores):
-                # Win if score == top_score (or within tie)
-                if score >= top_score - 0.01:  # tie tolerance
+                rank = int(ranks[i])
+                # ties: pay the best tied rank's prize once, do not invent a split formula
+                tied = np.where(np.isclose(all_scores, score))[0]
+                best_rank = int(ranks[tied].min()) if len(tied) else rank
+                payout = _payout_for_rank(best_rank, self.payout_structure)
+                roi_rows[i, sim_i] = (payout - self.entry_fee) / self.entry_fee
+                if best_rank == 1:
                     wins[i] += 1
-                    # Assign top payout
-                    payout = self.payout_structure[0] if self.payout_structure else 1000
-                elif score >= cash_threshold:
+                if payout > 0:
                     cashes[i] += 1
-                    # Assign average cash payout — simplified
-                    payout = np.mean(self.payout_structure[1:10]) if len(self.payout_structure) > 10 else 20
-                else:
-                    payout = 0
 
-                roi = (payout - entry_fee) / entry_fee if entry_fee else 0
-                roi_history[i].append(roi)
-
-        # Aggregate metrics
-        results = {}
-        for i in range(num_my):
-            rois = np.array(roi_history[i])
-            results[i] = {
+        per_lineup = {}
+        for i, lineup in enumerate(my_lineups):
+            rois = roi_rows[i]
+            per_lineup[i] = {
                 "lineup_index": i,
-                "lineup": my_lineups[i],
-                "roi": float(np.mean(rois)) if len(rois) else 0.0,
-                "roi_std": float(np.std(rois)) if len(rois) else 0.0,
-                "win_rate": wins[i] / self.num_sims,
-                "cash_rate": (cashes[i] + wins[i]) / self.num_sims,
-                "avg_score": 0,  # could compute
+                "lineup": lineup,
+                "roi": float(np.mean(rois)),
+                "median_roi": float(np.median(rois)),
+                "max_roi": float(np.max(rois)),
+                "min_roi": float(np.min(rois)),
+                "roi_std": float(np.std(rois)),
+                "win_rate": float(wins[i] / self.num_sims),
+                "cash_rate": float(cashes[i] / self.num_sims),
+                "dupes": int(dupes[i]),
             }
-
         return {
-            "per_lineup": results,
+            "per_lineup": per_lineup,
             "summary": {
                 "num_sims": self.num_sims,
-                "num_my_lineups": num_my,
+                "num_my_lineups": len(my_lineups),
                 "num_field_lineups": len(field_lineups),
-                "payout_structure": self.payout_structure[:10],  # first 10 for brevity
-            }
+                "field_subsampled": approximate_field,
+                "max_field_per_sim": self.max_field_per_sim,
+                "entry_fee": self.entry_fee,
+                "payout_structure_head": self.payout_structure[:10],
+                "metrics": [
+                    "roi",
+                    "median_roi",
+                    "max_roi",
+                    "min_roi",
+                    "win_rate",
+                    "cash_rate",
+                    "roi_std",
+                    "dupes",
+                ],
+                "source": "https://support.sabersim.com/en/articles/12079199-how-contest-sims-work",
+            },
         }
 
-    def flashback_sim(
-        self,
-        real_contest_lineups: List[List[str]],  # actual lineups played in contest (from DK CSV)
-        game_scripts: List[GameScript],
-    ) -> Dict:
-        """
-        Contest Flashback: "After a DraftKings contest completes, SaberSim takes all of the real lineups that were actually played in that contest. These real lineups are run through 100,000 slate simulations using SaberSim’s play-by-play game engine."
-        Source: https://support.sabersim.com/en/articles/12079605-using-contest-flashback
+    def flashback_sim(self, real_contest_lineups: List[List[str]], game_scripts: List[GameScript]) -> Dict:
+        return self.simulate(real_contest_lineups, real_contest_lineups, game_scripts)
 
-        This method re-simulates real contest lineups to compute Sim ROI.
-        """
-        # Reuse simulate but with real lineups as both my and field
-        # For flashback, my_lineups = real lineups, field = same (or empty)
-        # We'll compute ROI for each real lineup
-        return self.simulate(
-            my_lineups=real_contest_lineups,
-            field_lineups=real_contest_lineups,  # field is same set for flashback comparison
-            game_scripts=game_scripts,
-        )
+
+def _score(lineup: Sequence[str], points: Dict[str, float]) -> float:
+    return float(sum(points.get(pid, 0.0) for pid in lineup))
+
+
+def _payout_for_rank(rank: int, payouts: List[float]) -> float:
+    if rank < 1:
+        return 0.0
+    if rank - 1 < len(payouts):
+        return float(payouts[rank - 1])
+    return 0.0

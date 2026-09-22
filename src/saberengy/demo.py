@@ -1,17 +1,12 @@
-"""
-Demo script — runs full SABERENGY pipeline: sim -> projections -> ownership -> optimizer -> contest sim.
+"""Synthetic schematic demo. Not a live slate and not a SaberSim rebuild.
 
 Usage:
-  python -m saberengy.demo --sport NFL --slate main --n-sims 1000
+  PYTHONPATH=src python -m saberengy.demo --sport NFL --n-sims 50 --n-lineups 10
 
-No manual input required — uses synthetic slate for demo, but can be extended to fetch real data via data_sources.py.
-
-Verified pipeline matches SaberSim flow:
-1. Play-by-play simulations (thousands)
-2. Point projections = mean across sims + percentiles
-3. Field lineups + ownership (13 contest types)
-4. Sim Mode optimizer with correlation, sim diversity, ownership fade sliders
-5. Contest Sims 100k evaluations
+Players, salaries, and Vegas totals in this file are invented so the
+interfaces can run without a network. Ownership lineups from this demo are
+not roster-legal. For the public-data forward test, run:
+  PYTHONPATH=src python -m saberengy.pipeline
 """
 
 import argparse
@@ -165,7 +160,9 @@ def main():
     print(f"      Saved contest_sim.json")
 
     # Summary
-    print("\n[SABERENGY] Demo complete — all paywalled features rebuilt as open source")
+    print("\n[SABERENGY] Synthetic schematic demo finished.")
+    print("This demo does not use live salaries or calibrated rates.")
+    print("For the public-data forward test, run: PYTHONPATH=src python -m saberengy.pipeline")
     print(f"Outputs in {args.output}/")
     print("Verification links:")
     for k, v in get_verification_links().items():
